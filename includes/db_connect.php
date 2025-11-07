@@ -1,10 +1,20 @@
 <?php
+// Check if MySQLi extension is loaded
+if (!extension_loaded('mysqli')) {
+    http_response_code(500);
+    echo "MySQLi extension is not loaded. Please enable MySQLi in your PHP configuration.";
+    exit;
+}
+
 $db_host = '127.0.0.1';
 $db_user = 'root';
 $db_pass = '';
 $db_name = 'online_voting_system';
 
-mysqli_report(MYSQLI_REPORT_OFF);
+// Set MySQLi error reporting (only if function exists)
+if (function_exists('mysqli_report')) {
+    mysqli_report(MYSQLI_REPORT_OFF);
+}
 
 $mysqli = new mysqli($db_host, $db_user, $db_pass);
 if ($mysqli->connect_errno) {
@@ -24,6 +34,9 @@ if (!$mysqli->select_db($db_name)) {
 }
 
 $mysqli->set_charset('utf8mb4');
+
+// Create alias for backward compatibility
+$conn = $mysqli;
 
 $check = $mysqli->query("SHOW TABLES LIKE 'admins'");
 if ($check && $check->num_rows === 0) {

@@ -4,8 +4,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Online Voting System</title>
+    <title>Online Voting System - Secure Digital Democracy</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/Online_Voting_System/css/style.css">
 </head>
 
@@ -23,6 +24,7 @@
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="/Online_Voting_System/guest/view_results.php">Results</a></li>
+                    <li class="nav-item nav-cta me-2"><a class="btn btn-primary btn-sm" href="/Online_Voting_System/user/login.php">Vote Now</a></li>
                     <li class="nav-item nav-cta"><a class="btn btn-outline-brand btn-sm" href="/Online_Voting_System/admin/login.php">Admin Panel</a></li>
                 </ul>
             </div>
@@ -35,11 +37,57 @@
             <div class="container">
                 <div class="row align-items-center">
                     <div class="col-md-7">
-                        <h1>Secure, simple online voting</h1>
-                        <p class="lead">Create and manage elections, track results, and let voters cast securely — all from one intuitive dashboard.</p>
-                        <div class="d-flex gap-16">
-                            <a class="btn btn-brand" href="/Online_Voting_System/admin/login.php">Admin Panel</a>
-                            <a class="btn btn-outline-brand" href="/Online_Voting_System/guest/view_results.php">View Results</a>
+                        <h1>🗳️ Secure Online Voting System</h1>
+                        <p class="lead">Experience democracy in the digital age. Cast your vote securely, view real-time results, and participate in transparent elections from anywhere.</p>
+                        <div class="d-flex flex-wrap gap-3 mt-4">
+                            <a class="btn btn-brand btn-lg px-4" href="/Online_Voting_System/user/login.php">
+                                <i class="fas fa-vote-yea me-2"></i>Vote Now
+                            </a>
+                             <a class="btn btn-outline-secondary btn-lg px-4" href="/Online_Voting_System/admin/login.php">
+                                <i class="fas fa-cog me-2"></i>Admin Panel
+                            </a>
+                            <a class="btn btn-outline-brand btn-lg px-4" href="/Online_Voting_System/guest/view_results.php">
+                                <i class="fas fa-chart-bar me-2"></i>View Results
+                            </a>
+
+                        </div>
+
+                        <div class="mt-4 pt-3">
+                            <div class="row g-3">
+                                <div class="col-sm-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                            <i class="fas fa-shield-alt text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <small class="fw-bold d-block">Secure</small>
+                                            <small class="text-muted">OTP Authentication</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                                            <i class="fas fa-clock text-success"></i>
+                                        </div>
+                                        <div>
+                                            <small class="fw-bold d-block">Real-time</small>
+                                            <small class="text-muted">Live Results</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-info bg-opacity-10 rounded-circle p-2 me-3">
+                                            <i class="fas fa-users text-info"></i>
+                                        </div>
+                                        <div>
+                                            <small class="fw-bold d-block">Accessible</small>
+                                            <small class="text-muted">Easy to Use</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-5 text-center">
@@ -49,25 +97,66 @@
             </div>
         </section>
 
-        <section class="features">
+        <section class="features py-5">
             <div class="container">
-                <div class="row g-3">
+                <div class="text-center mb-5">
+                    <h2 class="fw-bold">Why Choose Our Voting System?</h2>
+                    <p class="text-muted">Built with modern technology for secure and transparent elections</p>
+                </div>
+
+                <div class="row g-4">
                     <div class="col-md-4">
-                        <div class="feature-card">
-                            <h5>Quick Setup</h5>
-                            <p class="muted">Create elections and add candidates in minutes.</p>
+                        <div class="feature-card text-center p-4 h-100">
+                            <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <i class="fas fa-rocket text-primary fa-2x"></i>
+                            </div>
+                            <h5 class="fw-bold">Quick Setup</h5>
+                            <p class="text-muted">Create elections and add candidates in minutes. No complex configuration required.</p>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="feature-card">
-                            <h5>Real-time Results</h5>
-                            <p class="muted">Track votes as they come in with clear charts and exports.</p>
+                        <div class="feature-card text-center p-4 h-100">
+                            <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <i class="fas fa-chart-line text-success fa-2x"></i>
+                            </div>
+                            <h5 class="fw-bold">Real-time Results</h5>
+                            <p class="text-muted">Track votes as they come in with clear charts and instant data exports.</p>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="feature-card">
-                            <h5>Secure</h5>
-                            <p class="muted">Built with simple security practices — password hashing and controlled admin access.</p>
+                        <div class="feature-card text-center p-4 h-100">
+                            <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                <i class="fas fa-lock text-warning fa-2x"></i>
+                            </div>
+                            <h5 class="fw-bold">Secure & Reliable</h5>
+                            <p class="text-muted">OTP authentication, encrypted data, and controlled admin access ensure integrity.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mt-4">
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-mobile-alt text-primary fa-2x me-3"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Mobile Friendly</h6>
+                                    <small class="text-muted">Vote from any device, anywhere</small>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-0">Responsive design ensures perfect voting experience on desktop, tablet, and mobile devices.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-envelope text-info fa-2x me-3"></i>
+                                <div>
+                                    <h6 class="fw-bold mb-1">Email Integration</h6>
+                                    <small class="text-muted">Secure OTP delivery system</small>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-0">Automated email notifications with professionally designed templates for voter authentication.</p>
                         </div>
                     </div>
                 </div>
@@ -75,8 +164,33 @@
         </section>
     </main>
 
+    <footer class="bg-dark text-white py-4">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <span class="logo-badge bg-primary">OV</span>
+                        <span class="fw-bold ms-2">Online Voting System</span>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">Empowering democracy through secure digital voting technology.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="mb-2">
+                        <a href="/Online_Voting_System/user/login.php" class="btn btn-outline-light btn-sm me-2">
+                            <i class="fas fa-vote-yea me-1"></i>Vote Now
+                        </a>
+                        <a href="/Online_Voting_System/admin/login.php" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-cog me-1"></i>Admin
+                        </a>
+                    </div>
+                    <small class="text-muted">© <?= date('Y') ?> Online Voting System. Built for democracy.</small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
+
 </body>
 
 </html>
