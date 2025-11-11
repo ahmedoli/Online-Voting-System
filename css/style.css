@@ -131,3 +131,86 @@ nav.navbar .nav-link, nav.navbar .navbar-text{color:#fff !important}
 
 .muted{color:var(--muted)}
 .gap-16{gap:16px}
+
+/* Full-width Dashboard Styles */
+.dashboard-full {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+}
+
+.dashboard-full .container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-width: 100% !important;
+}
+
+.dashboard-full .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.dashboard-section {
+    min-height: calc(100vh - 80px);
+}
+
+/* Responsive full-width cards */
+.dashboard-card {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+
+.dashboard-card .card {
+    border-radius: 8px !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.dashboard-card .card-body {
+    flex: 1 !important;
+}
+
+/* Make profile section use flexbox layout */
+.dashboard-card:first-child {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.dashboard-card:first-child .card:first-child {
+    flex: 0 0 auto !important;
+    margin-bottom: 1rem !important;
+}
+
+.dashboard-card:first-child .card:last-child {
+    flex: 1 !important;
+}
+
+/* Full-width table */
+.table-responsive {
+    width: 100% !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 991px) {
+    .dashboard-full .col-xl-3, .dashboard-full .col-lg-4 {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+        margin-bottom: 20px !important;
+    }
+    .dashboard-full .col-xl-9, .dashboard-full .col-lg-8 {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
+    
+    .dashboard-section {
+        min-height: auto !important;
+    }
+}
+
+/* Navbar full width */
+.dashboard-full .navbar .container-fluid {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+}

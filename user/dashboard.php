@@ -16,6 +16,19 @@ $voter_id = $_SESSION['voter_id'];
 $voter_name = isset($_SESSION['voter_name']) ? $_SESSION['voter_name'] : 'Unknown Voter';
 $voter_email = isset($_SESSION['voter_email']) ? $_SESSION['voter_email'] : 'No email';
 
+// Fetch voter name from database if not in session (fallback for existing sessions)
+if ($voter_name === 'Unknown Voter') {
+    $name_stmt = $conn->prepare("SELECT name FROM voters WHERE id = ?");
+    $name_stmt->bind_param("i", $voter_id);
+    $name_stmt->execute();
+    $name_result = $name_stmt->get_result();
+    if ($name_result->num_rows > 0) {
+        $voter_data = $name_result->fetch_assoc();
+        $voter_name = $voter_data['name'];
+        $_SESSION['voter_name'] = $voter_name; // Store it in session for future use
+    }
+}
+
 $message = '';
 $message_type = '';
 
@@ -83,10 +96,10 @@ $history_result = $history_stmt->get_result();
     <link href="../css/style.css" rel="stylesheet">
 </head>
 
-<body class="bg-light">
+<body class="bg-light dashboard-full">
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
+        <div class="container-fluid">
             <a class="navbar-brand" href="../index.php">
                 <i class="fas fa-vote-yea me-2"></i>Online Voting System
             </a>
@@ -101,19 +114,19 @@ $history_result = $history_stmt->get_result();
         </div>
     </nav>
 
-    <div class="container py-4">
+    <div class="container-fluid px-0 dashboard-section">
         <?php if (!empty($message)): ?>
-            <div class="alert alert-<?= $message_type === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show">
+            <div class="alert alert-<?= $message_type === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show mx-3">
                 <i class="fas fa-<?= $message_type === 'success' ? 'check-circle' : 'exclamation-triangle' ?> me-2"></i>
                 <?= htmlspecialchars($message) ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
 
-        <div class="row">
+        <div class="row g-0 h-100">
             <!-- Voter Info Card -->
-            <div class="col-md-4 mb-4">
-                <div class="card shadow-sm">
+            <div class="col-xl-3 col-lg-4 px-3 dashboard-card">
+                <div class="card shadow-sm h-100">
                     <div class="card-header bg-primary text-white">
                         <h5 class="card-title mb-0">
                             <i class="fas fa-user-circle me-2"></i>Your Profile
@@ -129,7 +142,7 @@ $history_result = $history_stmt->get_result();
                 </div>
 
                 <!-- Quick Links -->
-                <div class="card shadow-sm mt-3">
+                <div class="card shadow-sm mt-3 flex-fill">
                     <div class="card-header">
                         <h6 class="card-title mb-0">
                             <i class="fas fa-external-link-alt me-2"></i>Quick Links
@@ -147,8 +160,8 @@ $history_result = $history_stmt->get_result();
             </div>
 
             <!-- Active Elections -->
-            <div class="col-md-8">
-                <div class="card shadow-sm">
+            <div class="col-xl-9 col-lg-8 px-3 dashboard-card">
+                <div class="card shadow-sm h-100">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
                             <i class="fas fa-vote-yea me-2"></i>Active Elections
@@ -157,8 +170,15 @@ $history_result = $history_stmt->get_result();
                     <div class="card-body">
                         <?php if ($elections_result->num_rows > 0): ?>
                             <?php while ($election = $elections_result->fetch_assoc()): ?>
-                                <div class="border rounded p-3 mb-3">
-                                    <h6 class="fw-bold"><?= htmlspecialchars($election['name']) ?></h6>
+                                <div class="border rounded p-3 mb-3 live-results-container" data-election-id="<?= $election['id'] ?>">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="fw-bold mb-0"><?= htmlspecialchars($election['name']) ?></h6>
+                                        <div class="results-controls">
+                                            <small class="text-muted">
+                                                <i class="fas fa-circle text-success me-1" style="font-size: 0.6em;"></i>Live Results
+                                            </small>
+                                        </div>
+                                    </div>
                                     <p class="text-muted small mb-3"><?= htmlspecialchars($election['description']) ?></p>
 
                                     <?php
@@ -172,6 +192,11 @@ $history_result = $history_stmt->get_result();
                                     <?php if ($has_voted): ?>
                                         <div class="alert alert-success py-2">
                                             <i class="fas fa-check-circle me-2"></i>You have already voted in this election
+                                        </div>
+
+                                        <!-- Live Results Container -->
+                                        <div class="live-results mt-3">
+                                            <!-- Real-time results will be loaded here -->
                                         </div>
                                     <?php else: ?>
                                         <?php
@@ -204,6 +229,11 @@ $history_result = $history_stmt->get_result();
                                                 <i class="fas fa-check me-2"></i>Cast Vote
                                             </button>
                                         </form>
+
+                                        <!-- Live Results Container (for non-voted elections) -->
+                                        <div class="live-results mt-3">
+                                            <!-- Real-time results will be loaded here -->
+                                        </div>
                                     <?php endif; ?>
                                 </div>
                             <?php endwhile; ?>
@@ -218,11 +248,11 @@ $history_result = $history_stmt->get_result();
                 </div>
 
                 <!-- Voting History -->
-                <div class="card shadow-sm mt-4">
+                <div class="card shadow-sm mt-4 flex-fill">
                     <div class="card-header">
-                        <h6 class="card-title mb-0">
+                        <h5 class="card-title mb-0">
                             <i class="fas fa-history me-2"></i>Your Voting History
-                        </h6>
+                        </h5>
                     </div>
                     <div class="card-body">
                         <?php if ($history_result->num_rows > 0): ?>
@@ -258,6 +288,7 @@ $history_result = $history_stmt->get_result();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/realtime-results.js"></script>
 </body>
 
 </html>

@@ -1,5 +1,4 @@
 <?php
-// Check if MySQLi extension is loaded
 if (!extension_loaded('mysqli')) {
     http_response_code(500);
     echo "MySQLi extension is not loaded. Please enable MySQLi in your PHP configuration.";

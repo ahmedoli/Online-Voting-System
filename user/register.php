@@ -34,15 +34,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = $id_type == 'NID' ? 'Please enter a valid NID number (at least 10 digits).' : 'Please enter a valid Student ID (at least 6 characters).';
         $message_type = 'error';
     } else {
-        // Check database structure safely
+        // Check database structure
         $has_id_number = false;
         $has_nid_number = false;
         $has_name_column = false;
 
         try {
+            // Check for modern structure with id_number and id_type columns
             $columns_check = $conn->query("SHOW COLUMNS FROM voters LIKE 'id_number'");
             $has_id_number = $columns_check && $columns_check->num_rows > 0;
 
+            // Fallback to old nid_number structure if needed
             if (!$has_id_number) {
                 $nid_check = $conn->query("SHOW COLUMNS FROM voters LIKE 'nid_number'");
                 $has_nid_number = $nid_check && $nid_check->num_rows > 0;
@@ -52,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $name_check = $conn->query("SHOW COLUMNS FROM voters LIKE 'name'");
             $has_name_column = $name_check && $name_check->num_rows > 0;
         } catch (Exception $e) {
-            $message = 'Database structure error: ' . $e->getMessage();
+            $message = 'Database connection error. Please try again.';
             $message_type = 'error';
         }
         if ($has_id_number) {
@@ -86,9 +88,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Hash password for security
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-                // Register new voter - adapt to database structure
+                // Register new voter with appropriate database structure
                 if ($has_id_number) {
-                    // New structure with id_number and id_type
+                    // Modern structure with id_number and id_type
                     if ($has_name_column) {
                         $insert_stmt = $conn->prepare("INSERT INTO voters (name, phone, email, password, id_number, id_type) VALUES (?, ?, ?, ?, ?, ?)");
                         if ($insert_stmt) {
@@ -101,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
                 } elseif ($has_nid_number) {
-                    // Old structure with nid_number
+                    // Legacy structure with nid_number only
                     if ($has_name_column) {
                         $insert_stmt = $conn->prepare("INSERT INTO voters (name, phone, email, password, nid_number) VALUES (?, ?, ?, ?, ?)");
                         if ($insert_stmt) {
@@ -114,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
                 } else {
-                    // Minimal structure - only basic fields
+                    // Basic structure - no ID support
                     if ($has_name_column) {
                         $insert_stmt = $conn->prepare("INSERT INTO voters (name, phone, email, password) VALUES (?, ?, ?, ?)");
                         if ($insert_stmt) {
@@ -129,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if (!$insert_stmt) {
-                    $message = 'Database error: ' . $conn->error;
+                    $message = 'Database error occurred. Please try again.';
                     $message_type = 'error';
                 } else {
                     if ($insert_stmt->execute()) {
@@ -142,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Clear form data on success
                         $name = $phone = $email = $id_number = '';
                     } else {
-                        $message = 'Registration failed: ' . $insert_stmt->error;
+                        $message = 'Registration failed. Please check your information and try again.';
                         $message_type = 'error';
                     }
                     $insert_stmt->close();
