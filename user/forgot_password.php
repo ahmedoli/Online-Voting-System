@@ -70,45 +70,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_password'])) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Forgot Password - Online Voting System</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Forgot Password - Online Voting System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="bg-light d-flex align-items-center justify-content-center" style="min-height:100vh;">
-<div class="card shadow-sm p-4" style="width:400px;">
-<h4 class="text-center mb-3">Forgot Password</h4>
-<?php if($message): ?>
-<div class="alert alert-info"><?= htmlspecialchars($message) ?></div>
-<?php endif; ?>
 
-<?php if($step == 1): ?>
-<form method="POST">
-    <div class="mb-3">
-        <label class="form-label">Enter your registered email</label>
-        <input type="email" name="email" class="form-control" required>
-    </div>
-    <button class="btn btn-primary w-100">Send OTP</button>
-</form>
+<body class="d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height:100vh;">
+    <div class="card shadow-sm p-4" style="width:400px;">
+        <h4 class="text-center mb-3">Forgot Password</h4>
+        <?php if ($message): ?>
+            <div class="alert alert-info"><?= htmlspecialchars($message) ?></div>
+        <?php endif; ?>
 
-<?php elseif($step == 2): ?>
-<form method="POST">
-    <div class="mb-3">
-        <label class="form-label">Enter OTP (sent to your email)</label>
-        <input type="text" name="otp" class="form-control" required>
-    </div>
-    <button class="btn btn-primary w-100">Verify OTP</button>
-</form>
+        <?php if ($step == 1): ?>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Enter your registered email</label>
+                    <input type="email" name="email" class="form-control" required>
+                </div>
+                <button class="btn btn-primary w-100">Send OTP</button>
+            </form>
 
-<?php elseif($step == 3): ?>
-<form method="POST">
-    <div class="mb-3">
-        <label class="form-label">Enter New Password</label>
-        <input type="password" name="new_password" class="form-control" required minlength="6">
+        <?php elseif ($step == 2): ?>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Enter OTP (sent to your email)</label>
+                    <input type="text" name="otp" class="form-control" required>
+                </div>
+                <button class="btn btn-primary w-100">Verify OTP</button>
+            </form>
+
+        <?php elseif ($step == 3): ?>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Enter New Password</label>
+                    <input type="password" name="new_password" class="form-control" required minlength="6">
+                </div>
+                <button class="btn btn-success w-100">Reset Password</button>
+            </form>
+        <?php endif; ?>
     </div>
-    <button class="btn btn-success w-100">Reset Password</button>
-</form>
-<?php endif; ?>
-</div>
 </body>
+
 </html>
