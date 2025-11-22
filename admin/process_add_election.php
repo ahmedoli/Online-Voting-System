@@ -19,7 +19,6 @@ if ($name === '') {
     exit;
 }
 
-// check duplicate
 $stmt = db_prepare('SELECT id FROM elections WHERE name = ? LIMIT 1');
 $stmt->bind_param('s', $name);
 $stmt->execute();
@@ -36,8 +35,7 @@ if ($stmt->execute()) {
     flash_set('success', 'Election created successfully');
     header('Location: manage_elections.php');
     exit;
-} 
-else {
+} else {
     flash_set('error', 'Failed to create election');
     header('Location: add_election.php');
     exit;

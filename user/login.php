@@ -1,5 +1,4 @@
 <?php
-// Start session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -9,7 +8,6 @@ require_once '../includes/functions.php';
 $message = '';
 $message_type = '';
 
-// ✅ Show success message after password reset (from forgot_password.php)
 if (isset($_SESSION['success_message'])) {
     $message = $_SESSION['success_message'];
     $message_type = 'success';

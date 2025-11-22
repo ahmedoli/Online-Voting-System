@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
 requireAdmin();
-require_once __DIR__ . '/../includes/db_connect.php'; // ✅ Get overall statistics
+require_once __DIR__ . '/../includes/db_connect.php';
 $total_voters = 0;
 $total_votes = 0;
 
@@ -84,56 +84,113 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
         </div>
       </div>
 
-      <!-- Results Table -->
-      <div class="table-responsive table-container">
-        <table class="table table-hover align-middle text-center">
-          <thead class="table-primary">
-            <tr>
-              <th>Candidate Name</th>
-              <th>Election</th>
-              <th>Total Votes</th>
-              <th>Percentage</th>
-            </tr>
-          </thead>
-          <tbody id="results-table">
-            <!-- Results loaded via AJAX -->
-          </tbody>
-        </table>
-      </div>
+      <!-- Elections Results -->
+      <?php
+      $elections_query = "SELECT id, name, description FROM elections ORDER BY created_at DESC";
+      $elections_result = $mysqli->query($elections_query);
+
+      if ($elections_result && $elections_result->num_rows > 0):
+      ?>
+        <?php while ($election = $elections_result->fetch_assoc()): ?>
+          <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                  <i class="fas fa-vote-yea me-2"></i><?= htmlspecialchars($election['name']) ?>
+                </h5>
+                <a href="export_results.php?election_id=<?= $election['id'] ?>" class="btn btn-light btn-sm">
+                  <i class="fas fa-file-export me-1"></i> Export CSV
+                </a>
+              </div>
+              <?php if ($election['description']): ?>
+                <small class="text-light"><?= htmlspecialchars($election['description']) ?></small>
+              <?php endif; ?>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Candidate Name</th>
+                      <th>Party</th>
+                      <th class="text-center">Total Votes</th>
+                      <th class="text-center">Percentage</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php
+                    $candidates_query = "
+                      SELECT 
+                        c.candidate_name,
+                        c.party,
+                        COUNT(v.id) AS total_votes
+                      FROM candidates c
+                      LEFT JOIN vote_logs v ON v.candidate_id = c.id
+                      WHERE c.election_id = ?
+                      GROUP BY c.id
+                      ORDER BY total_votes DESC";
+
+                    $candidates_stmt = $mysqli->prepare($candidates_query);
+                    $candidates_stmt->bind_param('i', $election['id']);
+                    $candidates_stmt->execute();
+                    $candidates_result = $candidates_stmt->get_result();
+
+                    $election_total_query = "
+                      SELECT COUNT(v.id) AS total 
+                      FROM vote_logs v 
+                      JOIN candidates c ON c.id = v.candidate_id 
+                      WHERE c.election_id = ?";
+                    $election_total_stmt = $mysqli->prepare($election_total_query);
+                    $election_total_stmt->bind_param('i', $election['id']);
+                    $election_total_stmt->execute();
+                    $election_total_result = $election_total_stmt->get_result();
+                    $election_total_votes = $election_total_result->fetch_assoc()['total'];
+
+                    if ($candidates_result->num_rows > 0):
+                      while ($candidate = $candidates_result->fetch_assoc()):
+                        $percentage = ($election_total_votes > 0) ? round(($candidate['total_votes'] / $election_total_votes) * 100, 2) : 0;
+                    ?>
+                        <tr>
+                          <td><?= htmlspecialchars($candidate['candidate_name']) ?></td>
+                          <td><?= htmlspecialchars($candidate['party']) ?></td>
+                          <td class="text-center"><?= $candidate['total_votes'] ?></td>
+                          <td class="text-center"><?= $percentage ?>%</td>
+                        </tr>
+                      <?php
+                      endwhile;
+                    else:
+                      ?>
+                      <tr>
+                        <td colspan="4" class="text-muted text-center">No candidates found for this election</td>
+                      </tr>
+                    <?php endif; ?>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        <?php endwhile; ?>
+      <?php else: ?>
+        <div class="card">
+          <div class="card-body text-center">
+            <h5 class="text-muted">No elections found</h5>
+            <p class="text-muted">Create an election to see results here.</p>
+          </div>
+        </div>
+      <?php endif; ?>
 
       <div class="text-center mt-4">
-        <a href="dashboard.php" class="btn btn-secondary px-4 me-2">
+        <a href="dashboard.php" class="btn btn-secondary px-4">
           <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-        </a>
-        <a href="export_results.php" class="btn btn-success px-4">
-          <i class="fas fa-file-export me-1"></i> Export Results (CSV)
         </a>
       </div>
     </div>
   </div>
 
   <script>
-    // 🔁 Auto-refresh every 5 seconds
-    function fetchResults() {
-      fetch('fetch_results.php')
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.text();
-        })
-        .then(html => {
-          document.getElementById('results-table').innerHTML = html;
-        })
-        .catch(err => {
-          console.error('Error loading results:', err);
-          document.getElementById('results-table').innerHTML =
-            '<tr><td colspan="4" class="text-danger">Error loading results. Please refresh the page.</td></tr>';
-        });
-    }
-
-    fetchResults(); // Initial load
-    setInterval(fetchResults, 5000);
+    setTimeout(function() {
+      window.location.reload();
+    }, 30000);
   </script>
 
 </body>

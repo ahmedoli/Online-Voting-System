@@ -52,9 +52,13 @@ CREATE TABLE IF NOT EXISTS vote_logs (
   voter_id INT NOT NULL,
   election_id INT NOT NULL,
   candidate_id INT NOT NULL,
+  vote_hash VARCHAR(64) NOT NULL,
   voted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (voter_id) REFERENCES voters(id) ON DELETE CASCADE,
   FOREIGN KEY (election_id) REFERENCES elections(id) ON DELETE CASCADE,
   FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
   UNIQUE KEY unique_voter_election (voter_id, election_id)
 );
+
+-- Add vote_hash column to existing tables
+ALTER TABLE vote_logs ADD COLUMN IF NOT EXISTS vote_hash VARCHAR(64) DEFAULT '';

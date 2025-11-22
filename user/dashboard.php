@@ -16,16 +16,34 @@ $voter_id = $_SESSION['voter_id'];
 $voter_name = isset($_SESSION['voter_name']) ? $_SESSION['voter_name'] : 'Unknown Voter';
 $voter_email = isset($_SESSION['voter_email']) ? $_SESSION['voter_email'] : 'No email';
 
+// Check database connectivity
+if (!$conn) {
+    die("Database connection failed. Please check your XAMPP MySQL service.");
+}
+
+// Test if vote_logs table exists
+$table_check = $conn->query("SHOW TABLES LIKE 'vote_logs'");
+if (!$table_check || $table_check->num_rows === 0) {
+    die("Database table 'vote_logs' not found. Please run the database setup script.");
+}
+
 // Fetch voter name from database if not in session (fallback for existing sessions)
 if ($voter_name === 'Unknown Voter') {
-    $name_stmt = $conn->prepare("SELECT name FROM voters WHERE id = ?");
-    $name_stmt->bind_param("i", $voter_id);
-    $name_stmt->execute();
-    $name_result = $name_stmt->get_result();
-    if ($name_result->num_rows > 0) {
-        $voter_data = $name_result->fetch_assoc();
-        $voter_name = $voter_data['name'];
-        $_SESSION['voter_name'] = $voter_name; // Store it in session for future use
+    $name_stmt = $conn->prepare("SELECT name, email FROM voters WHERE id = ?");
+    if (!$name_stmt) {
+        error_log("Failed to prepare voter query: " . $conn->error);
+    } else {
+        $name_stmt->bind_param("i", $voter_id);
+        $name_stmt->execute();
+        $name_result = $name_stmt->get_result();
+        if ($name_result->num_rows > 0) {
+            $voter_data = $name_result->fetch_assoc();
+            $voter_name = $voter_data['name'];
+            $voter_email = $voter_data['email'];
+            $_SESSION['voter_name'] = $voter_name;
+            $_SESSION['voter_email'] = $voter_email;
+        }
+        $name_stmt->close();
     }
 }
 
@@ -37,31 +55,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vote_candidate'])) {
     $candidate_id = (int)$_POST['candidate_id'];
     $election_id = (int)$_POST['election_id'];
 
-    // Check if voter has already voted in this election
-    $check_stmt = $conn->prepare("SELECT id FROM vote_logs WHERE voter_id = ? AND election_id = ?");
-    $check_stmt->bind_param("ii", $voter_id, $election_id);
-    $check_stmt->execute();
-    $check_result = $check_stmt->get_result();
 
-    if ($check_result->num_rows > 0) {
-        $message = 'You have already voted in this election.';
+    error_log("Vote submission: voter_id=$voter_id, election_id=$election_id, candidate_id=$candidate_id");
+
+    // Validate input
+    if ($candidate_id <= 0 || $election_id <= 0) {
+        $message = 'Invalid candidate or election selection.';
         $message_type = 'error';
     } else {
-        // Record the vote
-        $vote_stmt = $conn->prepare("INSERT INTO vote_logs (voter_id, election_id, candidate_id) VALUES (?, ?, ?)");
-        $vote_stmt->bind_param("iii", $voter_id, $election_id, $candidate_id);
+        // Check if voter has already voted in this election
+        $check_stmt = $conn->prepare("SELECT id FROM vote_logs WHERE voter_id = ? AND election_id = ?");
 
-        if ($vote_stmt->execute()) {
-            // Update candidate vote count
-            $update_stmt = $conn->prepare("UPDATE candidates SET votes = votes + 1 WHERE id = ?");
-            $update_stmt->bind_param("i", $candidate_id);
-            $update_stmt->execute();
-
-            $message = 'Your vote has been successfully recorded!';
-            $message_type = 'success';
-        } else {
-            $message = 'Failed to record your vote. Please try again.';
+        if (!$check_stmt) {
+            $message = 'Database error. Please try again later.';
             $message_type = 'error';
+            error_log("Database prepare error: " . $conn->error);
+        } else {
+            $check_stmt->bind_param("ii", $voter_id, $election_id);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+
+            if ($check_result->num_rows > 0) {
+                $message = 'You have already voted in this election.';
+                $message_type = 'error';
+            } else {
+                // Validate candidate and election exist
+                $validate_stmt = $conn->prepare("SELECT c.id FROM candidates c JOIN elections e ON c.election_id = e.id WHERE c.id = ? AND e.id = ?");
+                if ($validate_stmt) {
+                    $validate_stmt->bind_param("ii", $candidate_id, $election_id);
+                    $validate_stmt->execute();
+                    $validate_result = $validate_stmt->get_result();
+                    $validate_stmt->close();
+
+                    if ($validate_result->num_rows === 0) {
+                        error_log("Invalid candidate_id=$candidate_id or election_id=$election_id");
+                        $message = 'Invalid candidate or election selection.';
+                        $message_type = 'error';
+                    } else {
+                        // Record the vote with secure hash (Backlog 6)
+                        if (logSecureVote($voter_id, $election_id, $candidate_id)) {
+                            // Update candidate vote count
+                            $update_stmt = $conn->prepare("UPDATE candidates SET votes = votes + 1 WHERE id = ?");
+                            if ($update_stmt) {
+                                $update_stmt->bind_param("i", $candidate_id);
+                                if ($update_stmt->execute()) {
+                                    error_log("Vote recorded successfully for voter $voter_id");
+                                    $message = 'Your vote has been successfully recorded!';
+                                    $message_type = 'success';
+                                } else {
+                                    error_log("Failed to update candidate vote count: " . $update_stmt->error);
+                                    $message = 'Vote recorded but failed to update count. Please contact admin.';
+                                    $message_type = 'warning';
+                                }
+                                $update_stmt->close();
+                            } else {
+                                error_log("Failed to prepare candidate update statement: " . $conn->error);
+                                $message = 'Vote recorded but failed to update count. Please contact admin.';
+                                $message_type = 'warning';
+                            }
+                        } else {
+                            error_log("Failed to log secure vote for voter $voter_id");
+                            $message = 'Failed to record your vote. Please try again.';
+                            $message_type = 'error';
+                        }
+                    }
+                } else {
+                    error_log("Failed to prepare validation statement: " . $conn->error);
+                    $message = 'Database error during validation. Please try again.';
+                    $message_type = 'error';
+                }
+            }
+            $check_stmt->close();
         }
     }
 }
@@ -184,9 +248,15 @@ $history_result = $history_stmt->get_result();
                                     <?php
                                     // Check if voter has already voted in this election
                                     $voted_check = $conn->prepare("SELECT id FROM vote_logs WHERE voter_id = ? AND election_id = ?");
-                                    $voted_check->bind_param("ii", $voter_id, $election['id']);
-                                    $voted_check->execute();
-                                    $has_voted = $voted_check->get_result()->num_rows > 0;
+                                    $has_voted = false;
+                                    if ($voted_check) {
+                                        $voted_check->bind_param("ii", $voter_id, $election['id']);
+                                        $voted_check->execute();
+                                        $has_voted = $voted_check->get_result()->num_rows > 0;
+                                        $voted_check->close();
+                                    } else {
+                                        error_log("Failed to prepare vote check: " . $conn->error);
+                                    }
                                     ?>
 
                                     <?php if ($has_voted): ?>
@@ -202,33 +272,45 @@ $history_result = $history_stmt->get_result();
                                         <?php
                                         // Get candidates for this election
                                         $candidates_stmt = $conn->prepare("SELECT * FROM candidates WHERE election_id = ? ORDER BY candidate_name");
-                                        $candidates_stmt->bind_param("i", $election['id']);
-                                        $candidates_stmt->execute();
-                                        $candidates_result = $candidates_stmt->get_result();
+                                        if (!$candidates_stmt) {
+                                            echo "<div class='alert alert-danger'>Error loading candidates: " . htmlspecialchars($conn->error) . "</div>";
+                                        } else {
+                                            $candidates_stmt->bind_param("i", $election['id']);
+                                            $candidates_stmt->execute();
+                                            $candidates_result = $candidates_stmt->get_result();
+                                        }
                                         ?>
 
-                                        <form method="POST" class="vote-form">
-                                            <input type="hidden" name="election_id" value="<?= $election['id'] ?>">
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold">Select your candidate:</label>
-                                                <?php while ($candidate = $candidates_result->fetch_assoc()): ?>
-                                                    <div class="form-check border rounded p-2 mb-2">
-                                                        <input class="form-check-input" type="radio" name="candidate_id"
-                                                            value="<?= $candidate['id'] ?>" id="candidate_<?= $candidate['id'] ?>" required>
-                                                        <label class="form-check-label w-100" for="candidate_<?= $candidate['id'] ?>">
-                                                            <strong><?= htmlspecialchars($candidate['candidate_name']) ?></strong>
-                                                            <?php if (!empty($candidate['party'])): ?>
-                                                                <span class="text-muted">- <?= htmlspecialchars($candidate['party']) ?></span>
-                                                            <?php endif; ?>
-                                                        </label>
-                                                    </div>
-                                                <?php endwhile; ?>
+                                        <?php if ($candidates_stmt && $candidates_result && $candidates_result->num_rows > 0): ?>
+                                            <form method="POST" class="vote-form">
+                                                <input type="hidden" name="election_id" value="<?= $election['id'] ?>">
+                                                <div class="mb-3">
+                                                    <label class="form-label fw-bold">Select your candidate:</label>
+                                                    <?php while ($candidate = $candidates_result->fetch_assoc()): ?>
+                                                        <div class="form-check border rounded p-2 mb-2">
+                                                            <input class="form-check-input" type="radio" name="candidate_id"
+                                                                value="<?= $candidate['id'] ?>" id="candidate_<?= $candidate['id'] ?>" required>
+                                                            <label class="form-check-label w-100" for="candidate_<?= $candidate['id'] ?>">
+                                                                <strong><?= htmlspecialchars($candidate['candidate_name']) ?></strong>
+                                                                <?php if (!empty($candidate['party'])): ?>
+                                                                    <span class="text-muted">- <?= htmlspecialchars($candidate['party']) ?></span>
+                                                                <?php endif; ?>
+                                                            </label>
+                                                        </div>
+                                                    <?php endwhile; ?>
+                                                </div>
+                                                <button type="submit" name="vote_candidate" class="btn btn-success"
+                                                    onclick="return confirm('Are you sure you want to cast your vote? This action cannot be undone.')">
+                                                    <i class="fas fa-check me-2"></i>Cast Vote
+                                                </button>
+                                            </form>
+                                            <?php if ($candidates_stmt) $candidates_stmt->close(); ?>
+                                        <?php else: ?>
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                No candidates available for this election.
                                             </div>
-                                            <button type="submit" name="vote_candidate" class="btn btn-success"
-                                                onclick="return confirm('Are you sure you want to cast your vote? This action cannot be undone.')">
-                                                <i class="fas fa-check me-2"></i>Cast Vote
-                                            </button>
-                                        </form>
+                                        <?php endif; ?>
 
                                         <!-- Live Results Container (for non-voted elections) -->
                                         <div class="live-results mt-3">

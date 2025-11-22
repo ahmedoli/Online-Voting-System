@@ -3,7 +3,6 @@ session_start();
 require_once '../includes/db_connect.php';
 require_once '../includes/functions.php';
 
-// redirect if session missing
 if (!isset($_SESSION['temp_voter_id'], $_SESSION['temp_voter_email'])) {
     header("Location: login.php");
     exit();
@@ -12,7 +11,6 @@ if (!isset($_SESSION['temp_voter_id'], $_SESSION['temp_voter_email'])) {
 $message = "";
 $message_type = "";
 
-// Verify OTP
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $otp = implode("", $_POST['otp']);
 
@@ -28,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// resend OTP
 if (isset($_GET['resend'])) {
     generateAndSendOTP($_SESSION['temp_voter_id'], $_SESSION['temp_voter_email']);
     $message = "A new OTP has been sent to your email.";
@@ -37,6 +34,7 @@ if (isset($_GET['resend'])) {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Verify OTP</title>
@@ -47,12 +45,14 @@ if (isset($_GET['resend'])) {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: Arial, sans-serif;
         }
+
         .verify-box {
             background: #fff;
             border-radius: 20px;
             padding: 40px;
             width: 450px;
         }
+
         .otp-input {
             width: 55px;
             height: 55px;
@@ -61,11 +61,13 @@ if (isset($_GET['resend'])) {
             border: 2px solid #ccc;
             border-radius: 10px;
         }
+
         .otp-input:focus {
             border-color: #6A5AE0;
             box-shadow: 0 0 3px rgba(106, 90, 224, .7);
             outline: none;
         }
+
         .btn-main {
             background: #5568FE;
             color: #fff;
@@ -74,16 +76,20 @@ if (isset($_GET['resend'])) {
             width: 100%;
             border: none;
         }
-        .resend-btn, .start-btn {
+
+        .resend-btn,
+        .start-btn {
             padding: 8px 20px;
             border-radius: 8px;
             font-size: 14px;
         }
+
         .resend-btn {
             background: #EEF2FF;
             border: 1px solid #CBD5FF;
             color: #5568FE;
         }
+
         .start-btn {
             background: #F3F4F6;
             border: 1px solid #D1D5DB;
@@ -142,7 +148,6 @@ if (isset($_GET['resend'])) {
             }
         }
 
-        // Countdown timer
         let time = 120;
         const el = document.getElementById("countdown");
         setInterval(() => {
@@ -153,4 +158,5 @@ if (isset($_GET['resend'])) {
     </script>
 
 </body>
+
 </html>
