@@ -69,8 +69,6 @@ $db_name = 'online_voting_system';
 | Page | URL | Credentials |
 |------|-----|-------------|
 | Homepage | `http://localhost/Online_Voting_System/` | - |
-| Admin Login | `http://localhost/Online_Voting_System/admin/login.php` | admin / admin123 |
-| Admin Dashboard | `http://localhost/Online_Voting_System/admin/dashboard.php` | After login |
 | Voter Registration | `http://localhost/Online_Voting_System/user/register.php` | - |
 | Voter Login | `http://localhost/Online_Voting_System/user/login.php` | Your registered email |
 | Voter Dashboard | `http://localhost/Online_Voting_System/user/dashboard.php` | After login + OTP |
@@ -143,19 +141,6 @@ Online_Voting_System/
 4. Monitor live results and statistics
 5. Export results as needed
 
-## Email Configuration (Optional)
-
-To enable OTP emails, configure `includes/email_config.php`:
-```php
-$email_config = [
-    'smtp' => [
-        'host' => 'smtp.gmail.com',
-        'port' => 587,
-        'username' => 'your-email@gmail.com',
-        'password' => 'your-app-password',
-        'encryption' => 'tls'
-    ]
-];
 ```
 
 ## Troubleshooting
