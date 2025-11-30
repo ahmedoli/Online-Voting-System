@@ -37,19 +37,20 @@ try {
 
         if (!$election_data) continue;
 
-        // Get candidates and their vote counts
+        // Get candidates and their vote counts from vote_logs
         $candidates_stmt = $conn->prepare("
             SELECT 
                 c.id,
                 c.candidate_name as name,
                 c.party,
-                c.votes,
-                COALESCE(c.votes, 0) as vote_count
-            FROM candidates c 
-            WHERE c.election_id = ? 
-            ORDER BY c.votes DESC, c.candidate_name ASC
+                COUNT(vl.id) as vote_count
+            FROM candidates c
+            LEFT JOIN vote_logs vl ON vl.candidate_id = c.id AND vl.election_id = ?
+            WHERE c.election_id = ?
+            GROUP BY c.id
+            ORDER BY vote_count DESC, c.candidate_name ASC
         ");
-        $candidates_stmt->bind_param("i", $eid);
+        $candidates_stmt->bind_param("ii", $eid, $eid);
         $candidates_stmt->execute();
         $candidates_result = $candidates_stmt->get_result();
 

@@ -45,6 +45,7 @@ $res = $mysqli->query('SELECT c.*, e.name as election_name FROM candidates c LEF
                     <th>#</th>
                     <th>Name</th>
                     <th>Party</th>
+                    <th>Position</th>
                     <th>Election</th>
                     <th>Votes</th>
                     <th>Actions</th>
@@ -56,6 +57,7 @@ $res = $mysqli->query('SELECT c.*, e.name as election_name FROM candidates c LEF
                         <td><?= (int)$row['id'] ?></td>
                         <td><?= sanitize($row['candidate_name']) ?></td>
                         <td><?= sanitize($row['party']) ?></td>
+                        <td><?= sanitize($row['position'] ?: 'General') ?></td>
                         <td><?= sanitize($row['election_name']) ?></td>
                         <td><?= (int)$row['votes'] ?></td>
                         <td>

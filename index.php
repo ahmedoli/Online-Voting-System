@@ -43,7 +43,7 @@
                             <a class="btn btn-brand btn-lg px-4" href="/Online_Voting_System/user/login.php">
                                 <i class="fas fa-vote-yea me-2"></i>Vote Now
                             </a>
-                             <a class="btn btn-outline-secondary btn-lg px-4" href="/Online_Voting_System/admin/login.php">
+                            <a class="btn btn-outline-secondary btn-lg px-4" href="/Online_Voting_System/admin/login.php">
                                 <i class="fas fa-cog me-2"></i>Admin Panel
                             </a>
                             <a class="btn btn-outline-brand btn-lg px-4" href="/Online_Voting_System/guest/view_results.php">
@@ -163,32 +163,7 @@
             </div>
         </section>
     </main>
-
-    <footer class="bg-dark text-white py-4">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <span class="logo-badge bg-primary">OV</span>
-                        <span class="fw-bold ms-2">Online Voting System</span>
-                    </div>
-                    <p class="text-muted small mt-2 mb-0">Empowering democracy through secure digital voting technology.</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <div class="mb-2">
-                        <a href="/Online_Voting_System/user/login.php" class="btn btn-outline-light btn-sm me-2">
-                            <i class="fas fa-vote-yea me-1"></i>Vote Now
-                        </a>
-                        <a href="/Online_Voting_System/admin/login.php" class="btn btn-outline-light btn-sm">
-                            <i class="fas fa-cog me-1"></i>Admin
-                        </a>
-                    </div>
-                    <small class="text-muted">© <?= date('Y') ?> Online Voting System. Built for democracy.</small>
-                </div>
-            </div>
-        </div>
-    </footer>
-
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>

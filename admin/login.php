@@ -75,6 +75,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         </form>
                         <div class="text-center mt-3 muted">Need help? Contact the system administrator.</div>
+                        <div class="text-center mt-4">
+                            <a href="/Online_Voting_System/index.php" class="btn btn-outline-primary btn-lg px-4">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Home
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

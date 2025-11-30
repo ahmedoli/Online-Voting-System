@@ -39,6 +39,10 @@ $elections = $mysqli->query('SELECT id, name FROM elections ORDER BY name');
                 <label class="form-label">Party</label>
                 <input name="party" class="form-control">
             </div>
+            <div class="mb-3">
+                <label class="form-label">Position</label>
+                <input name="position" class="form-control" placeholder="e.g., President, Vice President, Treasurer" required>
+            </div>
             <div>
                 <button class="btn btn-primary">Add Candidate</button>
                 <a class="btn btn-secondary" href="manage_candidates.php">Back</a>

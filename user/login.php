@@ -187,16 +187,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="text-center">
                         <a href="forgot_password.php" class="forgot-link"><i class="fas fa-key me-1"></i>Forgot Password?</a>
                     </div>
-                </form>
 
-                <hr class="my-4">
-
-                <div class="text-center">
-                    <p class="text-muted mb-2">Don't have an account?</p>
-                    <a href="register.php" class="btn btn-outline-primary px-4">
-                        <i class="fas fa-user-plus me-1"></i> Register Now
+                    <a href="/Online_Voting_System/index.php" class="btn btn-outline-primary w-100 mb-3 mt-3" style="border-radius:12px; font-weight:600;">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Home
                     </a>
-                </div>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <p class="text-muted mb-2">Don't have an account?</p>
+                        <a href="register.php" class="btn btn-outline-primary px-4">
+                            <i class="fas fa-user-plus me-1"></i> Register Now
+                        </a>
+                    </div>
             </div>
         </div>
     </div>

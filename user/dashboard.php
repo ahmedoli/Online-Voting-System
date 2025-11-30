@@ -1,294 +1,426 @@
-﻿<?php
-// Start session only if not already started
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-require_once '../includes/db_connect.php';
-require_once '../includes/functions.php';
+<?php
+session_start();
+require_once "../includes/db_connect.php";
+// require_once "../includes/auth_user.php"; // Removed: file does not exist and session check is already present
 
-// Check if user is logged in
+if (!function_exists('getCandidates')) {
+    function getCandidates($conn, $election_id, $position)
+    {
+        $stmt = $conn->prepare("SELECT * FROM candidates WHERE election_id=? AND position=?");
+        $stmt->bind_param("is", $election_id, $position);
+        $stmt->execute();
+        return $stmt->get_result();
+    }
+}
+
+
 if (!isset($_SESSION['voter_id'])) {
     header('Location: login.php');
     exit();
 }
 
-$voter_id = $_SESSION['voter_id'];
-$voter_name = isset($_SESSION['voter_name']) ? $_SESSION['voter_name'] : 'Unknown Voter';
-$voter_email = isset($_SESSION['voter_email']) ? $_SESSION['voter_email'] : 'No email';
-
-// Fetch voter name from database if not in session (fallback for existing sessions)
-if ($voter_name === 'Unknown Voter') {
-    $name_stmt = $conn->prepare("SELECT name FROM voters WHERE id = ?");
-    $name_stmt->bind_param("i", $voter_id);
-    $name_stmt->execute();
-    $name_result = $name_stmt->get_result();
-    if ($name_result->num_rows > 0) {
-        $voter_data = $name_result->fetch_assoc();
-        $voter_name = $voter_data['name'];
-        $_SESSION['voter_name'] = $voter_name; // Store it in session for future use
+// Ensure voter_name is set in session for display
+if (!isset($_SESSION['voter_name'])) {
+    $stmt = $conn->prepare("SELECT name FROM voters WHERE id = ?");
+    $stmt->bind_param("i", $_SESSION['voter_id']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $_SESSION['voter_name'] = $row['name'];
     }
+    $stmt->close();
 }
 
-$message = '';
-$message_type = '';
 
-// Handle vote submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vote_candidate'])) {
-    $candidate_id = (int)$_POST['candidate_id'];
-    $election_id = (int)$_POST['election_id'];
+$user_id = $_SESSION['voter_id'];
 
-    // Check if voter has already voted in this election
-    $check_stmt = $conn->prepare("SELECT id FROM vote_logs WHERE voter_id = ? AND election_id = ?");
-    $check_stmt->bind_param("ii", $voter_id, $election_id);
-    $check_stmt->execute();
-    $check_result = $check_stmt->get_result();
-
-    if ($check_result->num_rows > 0) {
-        $message = 'You have already voted in this election.';
-        $message_type = 'error';
-    } else {
-        // Record the vote
-        $vote_stmt = $conn->prepare("INSERT INTO vote_logs (voter_id, election_id, candidate_id) VALUES (?, ?, ?)");
-        $vote_stmt->bind_param("iii", $voter_id, $election_id, $candidate_id);
-
-        if ($vote_stmt->execute()) {
-            // Update candidate vote count
-            $update_stmt = $conn->prepare("UPDATE candidates SET votes = votes + 1 WHERE id = ?");
-            $update_stmt->bind_param("i", $candidate_id);
-            $update_stmt->execute();
-
-            $message = 'Your vote has been successfully recorded!';
-            $message_type = 'success';
-        } else {
-            $message = 'Failed to record your vote. Please try again.';
-            $message_type = 'error';
-        }
-    }
+// Handle voting feedback alerts
+$alert_message = '';
+$alert_type = '';
+if (isset($_GET['success'])) {
+    $alert_message = 'Your vote has been recorded successfully.';
+    $alert_type = 'success';
+} elseif (isset($_GET['already'])) {
+    $alert_message = 'You have already voted in this election.';
+    $alert_type = 'warning';
+} elseif (isset($_GET['missing'])) {
+    $alert_message = 'Please select a candidate for each position.';
+    $alert_type = 'danger';
+} elseif (isset($_GET['error'])) {
+    $alert_message = 'An error occurred while casting your vote. Please try again.';
+    $alert_type = 'danger';
 }
 
-// Get active elections
-$elections_query = "SELECT * FROM elections WHERE start_date <= CURDATE() AND end_date >= CURDATE() ORDER BY start_date DESC";
-$elections_result = $conn->query($elections_query);
+// FETCH ALL ACTIVE ELECTIONS
+$active_elections = [];
+$active_elections_result = $conn->query("SELECT * FROM elections WHERE start_date <= CURDATE() AND end_date >= CURDATE() ORDER BY start_date ASC");
+if ($active_elections_result && $active_elections_result instanceof mysqli_result) {
+    while ($row = $active_elections_result->fetch_assoc()) {
+        $active_elections[] = $row;
+    }
+}
+$hasActiveElection = count($active_elections) > 0;
 
-// Get voter's voting history
+// FETCH VOTING STATS
+$stats_stmt = $conn->prepare("SELECT COUNT(DISTINCT election_id) AS total_voted FROM vote_logs WHERE voter_id = ?");
+$stats_stmt->bind_param("i", $user_id);
+$stats_stmt->execute();
+$stats_result = $stats_stmt->get_result();
+if ($stats_result && $stats_result instanceof mysqli_result) {
+    $stats = $stats_result->fetch_assoc();
+} else {
+    $stats = ['total_voted' => 0];
+}
+$stats['active_elections'] = count($active_elections);
+$stats_stmt->close();
+
+// FETCH VOTING HISTORY
 $history_stmt = $conn->prepare("
-    SELECT e.name as election_name, c.candidate_name, c.party, vl.voted_at 
-    FROM vote_logs vl 
-    JOIN elections e ON vl.election_id = e.id 
-    JOIN candidates c ON vl.candidate_id = c.id 
-    WHERE vl.voter_id = ? 
-    ORDER BY vl.voted_at DESC
+    SELECT v.election_id, v.position, v.candidate_id, c.candidate_name, e.name AS election_name
+    FROM vote_logs v
+    INNER JOIN candidates c ON v.candidate_id = c.id
+    INNER JOIN elections e ON v.election_id = e.id
+    WHERE v.voter_id = ?
+    ORDER BY v.id DESC
 ");
-$history_stmt->bind_param("i", $voter_id);
+$history_stmt->bind_param("i", $user_id);
 $history_stmt->execute();
 $history_result = $history_stmt->get_result();
-?>
+if ($history_result && $history_result instanceof mysqli_result) {
+    $history = $history_result;
+} else {
+    $history = false;
+}
+$history_stmt->close();
 
+// --- VOTE PROCESSING ---
+$alreadyVoted = false;
+if ($hasActiveElection) {
+    $current_election_id = $active_elections[0]['id'];
+    // Check if already voted
+    $check_stmt = $conn->prepare("SELECT 1 FROM vote_logs WHERE voter_id = ? AND election_id = ?");
+    $check_stmt->bind_param("ii", $user_id, $current_election_id);
+    $check_stmt->execute();
+    $check_stmt->store_result();
+    $alreadyVoted = $check_stmt->num_rows > 0;
+    $check_stmt->close();
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voter Dashboard - Online Voting System</title>
+    <title>Online Voting System - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link href="../css/style.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8fafc;
+        }
+
+        .card {
+            border-radius: 1rem;
+            border: 1px solid #e3e6ea;
+            background: #fff;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+            color: #fff;
+            border-bottom: 1px solid #e3e6ea;
+            border-radius: 1rem 1rem 0 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .dashboard-section {
+            margin-bottom: 2rem;
+        }
+
+        .card:not(:last-child) {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-check-label {
+            font-weight: 500;
+        }
+
+        .badge-status {
+            font-size: 0.95em;
+            padding: 0.4em 0.8em;
+            border-radius: 0.5em;
+        }
+
+        .position-header {
+            background: #e3f0fc;
+            color: #1976d2;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            font-size: 1.08rem;
+        }
+
+        .position-header i {
+            margin-right: 0.5rem;
+        }
+
+        .gap-lg-4 {
+            gap: 2rem;
+        }
+
+        .sidebar-gap>.card:not(:last-child) {
+            margin-bottom: 1.5rem;
+        }
+
+        .header-status {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+            color: #fff;
+        }
+
+        .header-history {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%) !important;
+            color: #fff;
+        }
+
+        .dashboard-sidebar-flush {
+            margin-right: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        .header-actions {
+            background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%) !important;
+            color: #333;
+        }
+
+        @media (max-width: 991.98px) {
+            .dashboard-section {
+                margin-bottom: 1.5rem;
+            }
+
+            .gap-lg-4 {
+                gap: 1rem;
+            }
+        }
+    </style>
 </head>
 
-<body class="bg-light dashboard-full">
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="../index.php">
-                <i class="fas fa-vote-yea me-2"></i>Online Voting System
-            </a>
-            <div class="navbar-nav ms-auto">
-                <span class="navbar-text me-3">
-                    <i class="fas fa-user me-1"></i>Welcome, <?= htmlspecialchars($voter_name) ?>
-                </span>
-                <a href="logout.php" class="btn btn-outline-light btn-sm">
-                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-0">
+        <div class="container-fluid px-0">
+            <a class="navbar-brand fw-bold ms-3" href="#">Online Voting System</a>
+            <div class="ms-auto d-flex align-items-center me-3">
+                <a href="/Online_Voting_System/index.php" class="btn btn-primary btn-sm me-3" style="color:#fff;min-width:120px;">
+                    <i class="fas fa-home me-1"></i> Back to Home
                 </a>
+                <div class="dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle me-2 fs-3"></i>
+                        <span class="fw-bold fs-5" style="color: #fff; letter-spacing: 0.5px;">
+                            <?php echo isset($_SESSION['voter_name']) ? htmlspecialchars($_SESSION['voter_name']) : 'Voter'; ?>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                        <li><a class="dropdown-item" href="profile.php"><i class="fas fa-user me-2"></i>Profile</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
-
-    <div class="container-fluid px-0 dashboard-section">
-        <?php if (!empty($message)): ?>
-            <div class="alert alert-<?= $message_type === 'success' ? 'success' : 'danger' ?> alert-dismissible fade show mx-3">
-                <i class="fas fa-<?= $message_type === 'success' ? 'check-circle' : 'exclamation-triangle' ?> me-2"></i>
-                <?= htmlspecialchars($message) ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="container-fluid px-0 mt-4" style="padding-right:0 !important; margin-right:0 !important;">
+        <?php if ($alert_message): ?>
+            <div class="alert alert-<?= $alert_type ?> alert-dismissible fade show mx-3" role="alert">
+                <?= htmlspecialchars($alert_message) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
-
-        <div class="row g-0 h-100">
-            <!-- Voter Info Card -->
-            <div class="col-xl-3 col-lg-4 px-3 dashboard-card">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-user-circle me-2"></i>Your Profile
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <p><strong>Name:</strong> <?= htmlspecialchars($voter_name) ?></p>
-                        <p><strong>Email:</strong> <?= htmlspecialchars($voter_email) ?></p>
-                        <p class="text-success">
-                            <i class="fas fa-check-circle me-1"></i>Verified Voter
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Quick Links -->
-                <div class="card shadow-sm mt-3 flex-fill">
-                    <div class="card-header">
-                        <h6 class="card-title mb-0">
-                            <i class="fas fa-external-link-alt me-2"></i>Quick Links
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <a href="../guest/view_results.php" class="btn btn-outline-primary btn-sm w-100 mb-2">
-                            <i class="fas fa-chart-bar me-1"></i>View Results
-                        </a>
-                        <a href="../index.php" class="btn btn-outline-secondary btn-sm w-100">
-                            <i class="fas fa-home me-1"></i>Back to Home
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Active Elections -->
-            <div class="col-xl-9 col-lg-8 px-3 dashboard-card">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-vote-yea me-2"></i>Active Elections
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if ($elections_result->num_rows > 0): ?>
-                            <?php while ($election = $elections_result->fetch_assoc()): ?>
-                                <div class="border rounded p-3 mb-3 live-results-container" data-election-id="<?= $election['id'] ?>">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="fw-bold mb-0"><?= htmlspecialchars($election['name']) ?></h6>
-                                        <div class="results-controls">
-                                            <small class="text-muted">
-                                                <i class="fas fa-circle text-success me-1" style="font-size: 0.6em;"></i>Live Results
-                                            </small>
-                                        </div>
-                                    </div>
-                                    <p class="text-muted small mb-3"><?= htmlspecialchars($election['description']) ?></p>
-
-                                    <?php
-                                    // Check if voter has already voted in this election
-                                    $voted_check = $conn->prepare("SELECT id FROM vote_logs WHERE voter_id = ? AND election_id = ?");
-                                    $voted_check->bind_param("ii", $voter_id, $election['id']);
-                                    $voted_check->execute();
-                                    $has_voted = $voted_check->get_result()->num_rows > 0;
-                                    ?>
-
-                                    <?php if ($has_voted): ?>
-                                        <div class="alert alert-success py-2">
-                                            <i class="fas fa-check-circle me-2"></i>You have already voted in this election
-                                        </div>
-
-                                        <!-- Live Results Container -->
-                                        <div class="live-results mt-3">
-                                            <!-- Real-time results will be loaded here -->
-                                        </div>
-                                    <?php else: ?>
-                                        <?php
-                                        // Get candidates for this election
-                                        $candidates_stmt = $conn->prepare("SELECT * FROM candidates WHERE election_id = ? ORDER BY candidate_name");
-                                        $candidates_stmt->bind_param("i", $election['id']);
-                                        $candidates_stmt->execute();
-                                        $candidates_result = $candidates_stmt->get_result();
-                                        ?>
-
-                                        <form method="POST" class="vote-form">
-                                            <input type="hidden" name="election_id" value="<?= $election['id'] ?>">
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold">Select your candidate:</label>
-                                                <?php while ($candidate = $candidates_result->fetch_assoc()): ?>
-                                                    <div class="form-check border rounded p-2 mb-2">
-                                                        <input class="form-check-input" type="radio" name="candidate_id"
-                                                            value="<?= $candidate['id'] ?>" id="candidate_<?= $candidate['id'] ?>" required>
-                                                        <label class="form-check-label w-100" for="candidate_<?= $candidate['id'] ?>">
-                                                            <strong><?= htmlspecialchars($candidate['candidate_name']) ?></strong>
-                                                            <?php if (!empty($candidate['party'])): ?>
-                                                                <span class="text-muted">- <?= htmlspecialchars($candidate['party']) ?></span>
-                                                            <?php endif; ?>
-                                                        </label>
-                                                    </div>
-                                                <?php endwhile; ?>
+        <div class="row gap-lg-4 gx-0">
+            <!-- LEFT COLUMN: Active Elections -->
+            <div class="col-lg-7 mb-4 mb-lg-0">
+                <section class="dashboard-section">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex align-items-center">
+                            <i class="fas fa-vote-yea me-2 text-primary"></i> Active Elections
+                        </div>
+                        <div class="card-body">
+                            <?php if (!$hasActiveElection): ?>
+                                <div class="alert alert-info mb-0">No active elections available.</div>
+                            <?php else: ?>
+                                <div class="row g-3">
+                                    <?php foreach ($active_elections as $election): ?>
+                                        <div class="col-12 col-md-6">
+                                            <div class="border rounded p-3 mb-2 bg-light">
+                                                <h5 class="fw-bold mb-1"><?= htmlspecialchars($election['name']) ?></h5>
+                                                <div class="mb-1 small text-muted"><?= htmlspecialchars($election['description'] ?? '') ?></div>
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="badge bg-success badge-status">Active</span>
+                                                    <span class="text-muted small"><i class="fas fa-calendar-alt me-1"></i>Ends: <?= htmlspecialchars($election['end_date'] ?? '') ?></span>
+                                                </div>
+                                                <?php
+                                                // Only show voting form for the first active election and if not already voted
+                                                if ($active_elections[0]['id'] == $election['id'] && !$alreadyVoted):
+                                                    // Dynamically fetch all unique positions for this election
+                                                    $positions = [];
+                                                    $pos_stmt = $conn->prepare("SELECT DISTINCT position FROM candidates WHERE election_id = ? ORDER BY FIELD(position, 'President', 'Vice-President', 'General Secretary'), position");
+                                                    $pos_stmt->bind_param("i", $election['id']);
+                                                    $pos_stmt->execute();
+                                                    $pos_result = $pos_stmt->get_result();
+                                                    while ($row = $pos_result->fetch_assoc()) {
+                                                        $positions[] = $row['position'];
+                                                    }
+                                                    $pos_stmt->close();
+                                                    $position_icons = [
+                                                        'President' => 'fa-user-tie',
+                                                        'Vice-President' => 'fa-user-friends',
+                                                        'General Secretary' => 'fa-user-pen',
+                                                    ];
+                                                ?>
+                                                    <form method="POST" action="process_vote.php" onsubmit="return validateVoteForm(this);">
+                                                        <input type="hidden" name="election_id" value="<?= (int)$election['id'] ?>">
+                                                        <?php
+                                                        function slugify($text)
+                                                        {
+                                                            $text = strtolower(trim($text));
+                                                            $text = preg_replace('/[^a-z0-9]+/', '_', $text);
+                                                            return trim($text, '_');
+                                                        }
+                                                        $position_slug_map = [];
+                                                        foreach ($positions as $label):
+                                                            $slug = slugify($label);
+                                                            $position_slug_map[$slug] = $label;
+                                                            $candidates = getCandidates($conn, $election['id'], $label);
+                                                            if ($candidates && $candidates->num_rows > 0): ?>
+                                                                <div class="mb-3 position-block-js" data-position-label="<?= htmlspecialchars($label) ?>">
+                                                                    <div class="position-header">
+                                                                        <i class="fas <?= isset($position_icons[$label]) ? $position_icons[$label] : 'fa-user' ?>"></i>
+                                                                        <?= htmlspecialchars($label) ?>
+                                                                    </div>
+                                                                    <?php foreach ($candidates as $candidate): ?>
+                                                                        <div class="form-check mb-1">
+                                                                            <input class="form-check-input" type="radio" name="<?= $slug ?>" value="<?= $candidate['id'] ?>" id="<?= $slug . '_' . $candidate['id'] ?>" required>
+                                                                            <label class="form-check-label" for="<?= $slug . '_' . $candidate['id'] ?>">
+                                                                                <?= htmlspecialchars($candidate['candidate_name']) ?>
+                                                                            </label>
+                                                                        </div>
+                                                                    <?php endforeach; ?>
+                                                                </div>
+                                                        <?php endif;
+                                                        endforeach;
+                                                        ?>
+                                                        <button type="submit" class="btn btn-primary w-100">Cast Vote</button>
+                                                    </form>
+                                                    <script>
+                                                        function validateVoteForm(form) {
+                                                            var valid = true;
+                                                            var missingPositions = [];
+                                                            var positionBlocks = form.querySelectorAll('.position-block-js');
+                                                            positionBlocks.forEach(function(block) {
+                                                                var label = block.getAttribute('data-position-label');
+                                                                var radios = block.querySelectorAll('input[type=radio]');
+                                                                var checked = false;
+                                                                radios.forEach(function(radio) {
+                                                                    if (radio.checked) checked = true;
+                                                                });
+                                                                if (!checked) {
+                                                                    valid = false;
+                                                                    missingPositions.push(label);
+                                                                }
+                                                            });
+                                                            if (!valid) {
+                                                                alert('Please select a candidate for each position before submitting your vote.');
+                                                            }
+                                                            return valid;
+                                                        }
+                                                    </script>
+                                                <?php elseif ($active_elections[0]['id'] == $election['id'] && $alreadyVoted): ?>
+                                                    <div class="alert alert-success text-center mb-0">Your vote has been recorded successfully.</div>
+                                                <?php endif; ?>
                                             </div>
-                                            <button type="submit" name="vote_candidate" class="btn btn-success"
-                                                onclick="return confirm('Are you sure you want to cast your vote? This action cannot be undone.')">
-                                                <i class="fas fa-check me-2"></i>Cast Vote
-                                            </button>
-                                        </form>
-
-                                        <!-- Live Results Container (for non-voted elections) -->
-                                        <div class="live-results mt-3">
-                                            <!-- Real-time results will be loaded here -->
                                         </div>
-                                    <?php endif; ?>
+                                    <?php endforeach; ?>
                                 </div>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <div class="text-center py-4">
-                                <i class="fas fa-vote-yea fa-3x text-muted mb-3"></i>
-                                <h6>No Active Elections</h6>
-                                <p class="text-muted">There are currently no active elections available for voting.</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <!-- RIGHT COLUMN: Sidebar -->
+            <div class="col-lg-4 sidebar-gap dashboard-sidebar-flush">
+                <section class="dashboard-section">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header header-status d-flex align-items-center">
+                            <i class="fas fa-chart-pie me-2 text-info"></i> Voting Status
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <div class="fw-bold fs-4"><?= $stats['total_voted'] ?? 0 ?></div>
+                                    <div class="small text-muted">Elections Voted</div>
+                                </div>
+                                <div>
+                                    <div class="fw-bold fs-4"><?= $stats['active_elections'] ?? 0 ?></div>
+                                    <div class="small text-muted">Active Elections</div>
+                                </div>
                             </div>
-                        <?php endif; ?>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Voting History -->
-                <div class="card shadow-sm mt-4 flex-fill">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-history me-2"></i>Your Voting History
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if ($history_result->num_rows > 0): ?>
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Election</th>
-                                            <th>Candidate</th>
-                                            <th>Party</th>
-                                            <th>Voted At</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php while ($vote = $history_result->fetch_assoc()): ?>
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header header-history d-flex align-items-center">
+                            <i class="fas fa-history me-2 text-secondary"></i> Voting History
+                        </div>
+                        <div class="card-body">
+                            <?php if (!$history || $history->num_rows == 0): ?>
+                                <div class="text-center text-muted">No voting history yet.</div>
+                            <?php else: ?>
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead>
                                             <tr>
-                                                <td><?= htmlspecialchars($vote['election_name']) ?></td>
-                                                <td><?= htmlspecialchars($vote['candidate_name']) ?></td>
-                                                <td><?= htmlspecialchars($vote['party']) ?></td>
-                                                <td><?= date('M j, Y g:i A', strtotime($vote['voted_at'])) ?></td>
+                                                <th>Election</th>
+                                                <th>Position</th>
+                                                <th>Candidate</th>
                                             </tr>
-                                        <?php endwhile; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php else: ?>
-                            <p class="text-muted text-center">You haven't voted in any elections yet.</p>
-                        <?php endif; ?>
+                                        </thead>
+                                        <tbody>
+                                            <?php while ($h = $history->fetch_assoc()): ?>
+                                                <tr>
+                                                    <td><?= htmlspecialchars($h['election_name']) ?></td>
+                                                    <td><?= htmlspecialchars($h['position']) ?></td>
+                                                    <td><?= htmlspecialchars($h['candidate_name']) ?></td>
+                                                </tr>
+                                            <?php endwhile; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
-                </div>
+                    <div class="card shadow-sm">
+                        <div class="card-header header-actions d-flex align-items-center">
+                            <i class="fas fa-bolt me-2 text-warning"></i> Quick Actions
+                        </div>
+                        <div class="card-body">
+                            <a href="../guest/view_results.php" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-chart-bar me-2"></i>View Results
+                            </a>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../js/realtime-results.js"></script>
 </body>
+
 
 </html>

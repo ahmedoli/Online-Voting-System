@@ -43,8 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $insert_stmt->bind_param("ssssss", $name, $phone, $email, $hashed_password, $id_number, $id_type);
 
             if ($insert_stmt->execute()) {
-                $message = 'Registration successful! You can now login with your credentials.';
-                $message_type = 'success';
+                $_SESSION['success_message'] = 'Registration successful! You can now login with your credentials.';
+                header('Location: login.php');
+                exit();
             } else {
                 $message = 'Registration failed. Please try again.';
                 $message_type = 'error';
