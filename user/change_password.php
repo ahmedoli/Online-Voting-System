@@ -1,12 +1,10 @@
 <?php
-// Start session only if not already started
-if (session_status() === PHP_SESSION_NONE) {
+if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 require_once '../includes/db_connect.php';
 require_once '../includes/functions.php';
 
-// Check if user is logged in
 if (!isset($_SESSION['voter_id'])) {
     header('Location: login.php');
     exit();

@@ -7,52 +7,65 @@ $message = '';
 $message_type = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name']);
-    $phone = trim($_POST['phone']);
-    $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
-    $id_number = trim($_POST['id_number']);
-    $id_type = trim($_POST['id_type']);
-
-    if (empty($name) || empty($phone) || empty($email) || empty($password) || empty($id_number) || empty($id_type)) {
-        $message = 'All fields are required.';
-        $message_type = 'error';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $message = 'Please enter a valid email address.';
-        $message_type = 'error';
-    } elseif (strlen($phone) < 11) {
-        $message = 'Please enter a valid phone number.';
-        $message_type = 'error';
-    } elseif (strlen($password) < 6) {
-        $message = 'Password must be at least 6 characters long.';
-        $message_type = 'error';
-    } elseif (($id_type == 'NID' && strlen($id_number) < 10) || ($id_type == 'Student' && strlen($id_number) < 6)) {
-        $message = $id_type == 'NID' ? 'Please enter a valid NID number (at least 10 digits).' : 'Please enter a valid Student ID (at least 6 characters).';
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        $message = 'Invalid request. Please try again.';
         $message_type = 'error';
     } else {
-        $stmt = $conn->prepare("SELECT id FROM voters WHERE email = ? OR phone = ? OR id_number = ?");
-        $stmt->bind_param("sss", $email, $phone, $id_number);
-        $stmt->execute();
+        $name = sanitize($_POST['name'] ?? '');
+        $phone = sanitize($_POST['phone'] ?? '');
+        $email = sanitize($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $id_number = sanitize($_POST['id_number'] ?? '');
+        $id_type = sanitize($_POST['id_type'] ?? '');
 
-        if ($stmt->get_result()->num_rows > 0) {
-            $message = 'A voter with this email, phone number, or ID already exists.';
+        // Enhanced validation using new functions
+        if (empty($name) || empty($phone) || empty($email) || empty($password) || empty($id_number) || empty($id_type)) {
+            $message = 'All fields are required.';
+            $message_type = 'error';
+        } elseif (!validateName($name)) {
+            $message = 'Please enter a valid name (2-100 characters, letters only).';
+            $message_type = 'error';
+        } elseif (!validateEmail($email)) {
+            $message = 'Please enter a valid email address.';
+            $message_type = 'error';
+        } elseif (!validatePhone($phone)) {
+            $message = 'Please enter a valid phone number (10-15 digits).';
+            $message_type = 'error';
+        } elseif (!validatePassword($password)) {
+            $message = 'Password must be at least 6 characters long.';
+            $message_type = 'error';
+        } elseif (!in_array($id_type, ['NID', 'Student'])) {
+            $message = 'Please select a valid ID type.';
+            $message_type = 'error';
+        } elseif (!validateIdNumber($id_number, $id_type)) {
+            $message = $id_type == 'NID' ? 'Please enter a valid NID number (10-20 digits only).' : 'Please enter a valid Student ID (6-20 characters).';
             $message_type = 'error';
         } else {
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-            $insert_stmt = $conn->prepare("INSERT INTO voters (name, phone, email, password, id_number, id_type) VALUES (?, ?, ?, ?, ?, ?)");
-            $insert_stmt->bind_param("ssssss", $name, $phone, $email, $hashed_password, $id_number, $id_type);
+            $stmt = $conn->prepare("SELECT id FROM voters WHERE email = ? OR phone = ? OR id_number = ?");
+            $stmt->bind_param("sss", $email, $phone, $id_number);
+            $stmt->execute();
 
-            if ($insert_stmt->execute()) {
-                $_SESSION['success_message'] = 'Registration successful! You can now login with your credentials.';
-                header('Location: login.php');
-                exit();
-            } else {
-                $message = 'Registration failed. Please try again.';
+            if ($stmt->get_result()->num_rows > 0) {
+                $message = 'A voter with this email, phone number, or ID already exists.';
                 $message_type = 'error';
+            } else {
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $insert_stmt = $conn->prepare("INSERT INTO voters (name, phone, email, password, id_number, id_type) VALUES (?, ?, ?, ?, ?, ?)");
+                $insert_stmt->bind_param("ssssss", $name, $phone, $email, $hashed_password, $id_number, $id_type);
+
+                if ($insert_stmt->execute()) {
+                    $_SESSION['success_message'] = 'Registration successful! You can now login with your credentials.';
+                    header('Location: login.php');
+                    exit();
+                } else {
+                    $message = 'Registration failed. Please try again.';
+                    $message_type = 'error';
+                }
+                $insert_stmt->close();
             }
-            $insert_stmt->close();
+            $stmt->close();
         }
-        $stmt->close();
     }
 }
 ?>
@@ -161,6 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
 
                     <form method="POST" class="needs-validation" novalidate>
+                        <?= getCSRFField() ?>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Full Name</label>
                             <input type="text" name="name" class="form-control" placeholder="Enter your full name" required>

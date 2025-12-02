@@ -2,6 +2,29 @@
 require_once __DIR__ . '/../includes/db_connect.php';
 require_once __DIR__ . '/../includes/functions.php';
 
+// Function to define position hierarchy (declared once at the top)
+function getPositionOrder($position)
+{
+    $order = [
+        'president' => 1,
+        'vice-president' => 2,
+        'vice president' => 2,
+        'general secretary' => 3,
+        'secretary' => 4,
+        'treasurer' => 5,
+        'joint secretary' => 6,
+        'organizing secretary' => 7,
+        'publicity secretary' => 8,
+        'sports secretary' => 9,
+        'cultural secretary' => 10,
+        'member' => 11,
+        'executive member' => 11,
+        'general' => 99
+    ];
+
+    $pos_lower = strtolower(trim($position));
+    return isset($order[$pos_lower]) ? $order[$pos_lower] : 50;
+}
 
 // Fetch all elections with end_date
 $elections = $conn->query("
@@ -51,22 +74,30 @@ if (!$elections) {
             background: #4f46e5;
         }
 
-        .position-block {
-            margin-bottom: 2.5rem;
+        .position-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px !important;
+            border-left: 5px solid #0d6efd;
         }
 
-        .position-block:not(:first-child) {
-            margin-top: 2.5rem;
-        }
-
-        .position-title {
-            font-size: 1.15rem;
-            font-weight: 600;
-            color: #1976d2;
-            border-bottom: 2px solid #e3f0fc;
-            padding-bottom: 0.5rem;
-            margin-bottom: 1.2rem;
+        .position-header h5 {
+            color: #0d6efd !important;
+            text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+
+        .position-divider {
+            border: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #0d6efd 0%, transparent 100%);
+            margin-bottom: 15px;
+        }
+
+        .position-results table {
+            border-radius: 8px;
+            overflow: hidden;
         }
 
         .table-results th,
@@ -135,11 +166,18 @@ if (!$elections) {
                     $max_votes = 0;
                     while ($candidate = $res->fetch_assoc()) {
                         $position = $candidate['position'] ?: 'General';
+                        // Normalize position display (Title Case)
+                        $position = ucwords(strtolower(trim($position)));
                         if (!isset($positions[$position])) {
                             $positions[$position] = [];
                         }
                         $positions[$position][] = $candidate;
                     }
+
+                    // Sort positions by hierarchy
+                    uksort($positions, function ($a, $b) {
+                        return getPositionOrder($a) - getPositionOrder($b);
+                    });
                     // Find overall winner (highest votes among all positions)
                     foreach ($positions as $cands) {
                         foreach ($cands as $cand) {
@@ -153,11 +191,46 @@ if (!$elections) {
                     $winner_votes = $overall_winner ? $overall_winner['votes'] : 0;
                     ?>
 
-                    <?php if ($is_completed && $overall_winner && $winner_name): ?>
-                        <!-- Winner Highlight -->
-                        <div class="alert alert-success py-2 mb-3">
-                            <strong><i class="fas fa-trophy me-1"></i>Overall Winner:</strong>
-                            <?= sanitize($winner_name) ?> (<?= $winner_votes ?> votes)
+                    <?php if ($is_completed && !empty($positions)): ?>
+                        <!-- Winners by Position for this election -->
+                        <div class="alert alert-success mb-4">
+                            <h6 class="mb-3"><i class="fas fa-trophy me-2"></i>Winners by Position</h6>
+                            <?php
+                            // Find winner for each position in this election
+                            $position_winners = [];
+                            foreach ($positions as $position => $candidates) {
+                                $max_votes = 0;
+                                $winner = null;
+                                foreach ($candidates as $candidate) {
+                                    if ((int)$candidate['votes'] > $max_votes) {
+                                        $max_votes = (int)$candidate['votes'];
+                                        $winner = $candidate;
+                                    }
+                                }
+                                if ($winner && $max_votes > 0) {
+                                    $position_winners[$position] = $winner;
+                                }
+                            }
+                            ?>
+
+                            <?php if (!empty($position_winners)): ?>
+                                <div class="row">
+                                    <?php foreach ($position_winners as $position => $winner): ?>
+                                        <div class="col-md-4 mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-crown text-warning me-2"></i>
+                                                <div>
+                                                    <strong class="text-success"><?= sanitize($position) ?>:</strong>
+                                                    <span><?= sanitize($winner['candidate_name']) ?></span>
+                                                    <small class="text-muted">(<?= $winner['votes'] ?> votes)</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <small class="text-muted">No winners found for this election.</small>
+                            <?php endif; ?>
                         </div>
                     <?php elseif ($is_in_progress): ?>
                         <div class="alert alert-info py-2 mb-3">
@@ -168,35 +241,42 @@ if (!$elections) {
                     <!-- Results by Position -->
                     <?php if ($is_completed && !empty($positions)): ?>
                         <?php foreach ($positions as $position => $candidates): ?>
-                            <div class="position-block">
-                                <div class="position-title"><?= sanitize($position) ?></div>
-                                <table class="table table-bordered table-results align-middle mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Candidate Name</th>
-                                            <th>Party</th>
-                                            <th class="text-center">Total Votes</th>
-                                            <th class="text-center">Percentage</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php
-                                        $total_votes = 0;
-                                        foreach ($candidates as $c) {
-                                            $total_votes += (int)$c['votes'];
-                                        }
-                                        foreach ($candidates as $c):
-                                            $percent = $total_votes > 0 ? round(((int)$c['votes'] / $total_votes) * 100) : 0;
-                                        ?>
-                                            <tr class="<?= $winner_name && $c['candidate_name'] === $winner_name ? 'winner-row' : '' ?>">
-                                                <td><?= sanitize($c['candidate_name']) ?></td>
-                                                <td><?= sanitize($c['party']) ?></td>
-                                                <td class="text-center"><?= (int)$c['votes'] ?></td>
-                                                <td class="text-center"><?= $percent ?>%</td>
+                            <div class="position-section mb-5">
+                                <div class="position-header mb-3">
+                                    <h5 class="text-primary fw-bold mb-2">
+                                        <i class="fas fa-award me-2"></i><?= sanitize($position) ?>
+                                    </h5>
+                                    <hr class="position-divider">
+                                </div>
+                                <div class="position-results">
+                                    <table class="table table-bordered table-results align-middle mb-0 shadow-sm">
+                                        <thead class="table-primary">
+                                            <tr>
+                                                <th>Candidate Name</th>
+                                                <th>Party</th>
+                                                <th class="text-center">Total Votes</th>
+                                                <th class="text-center">Percentage</th>
                                             </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            <?php
+                                            $total_votes = 0;
+                                            foreach ($candidates as $c) {
+                                                $total_votes += (int)$c['votes'];
+                                            }
+                                            foreach ($candidates as $c):
+                                                $percent = $total_votes > 0 ? round(((int)$c['votes'] / $total_votes) * 100) : 0;
+                                            ?>
+                                                <tr class="<?= $winner_name && $c['candidate_name'] === $winner_name ? 'winner-row' : '' ?>">
+                                                    <td><strong><?= sanitize($c['candidate_name']) ?></strong></td>
+                                                    <td><?= sanitize($c['party']) ?></td>
+                                                    <td class="text-center"><span class="badge bg-success"><?= (int)$c['votes'] ?></span></td>
+                                                    <td class="text-center"><strong><?= $percent ?>%</strong></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     <?php elseif ($is_in_progress): ?>

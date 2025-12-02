@@ -1,31 +1,54 @@
 <?php
+require_once __DIR__ . '/../includes/security_headers.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/db_connect.php';
 
 if (isAdminLoggedIn()) {
-    header('Location: /Online_Voting_System/admin/dashboard.php');
+    header('Location: ' . getBaseUrl() . '/admin/dashboard.php');
     exit;
 }
 
 $error = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
+    // Verify CSRF token
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        $error = 'Invalid request. Please try again.';
+    } else {
+        $username = sanitize($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
 
-    $stmt = db_prepare('SELECT id, username, password FROM admins WHERE username = ? LIMIT 1');
-    $stmt->bind_param('s', $username);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($row = $res->fetch_assoc()) {
+        $stmt = db_prepare('SELECT id, username, password FROM admins WHERE username = ? LIMIT 1');
+        $stmt->bind_param('s', $username);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($row = $res->fetch_assoc()) {
+            // Check if password is hashed or plain text (for migration)
+            $password_valid = false;
 
-        if (password_verify($password, $row['password']) || $password === $row['password']) {
-            $_SESSION['admin_id'] = $row['id'];
-            $_SESSION['admin_user'] = $row['username'];
-            header('Location: /Online_Voting_System/admin/dashboard.php');
-            exit;
+            if (password_verify($password, $row['password'])) {
+                // Password is properly hashed
+                $password_valid = true;
+            } elseif ($password === $row['password']) {
+                // Password is still plain text - update it to hashed version
+                $password_valid = true;
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $update_stmt = db_prepare('UPDATE admins SET password = ? WHERE id = ?');
+                $update_stmt->bind_param('si', $hashed_password, $row['id']);
+                $update_stmt->execute();
+                error_log("Updated plain text password to hashed for admin: " . $row['username']);
+            }
+
+            if ($password_valid) {
+                // Regenerate session ID on login to prevent session fixation
+                session_regenerate_id(true);
+                $_SESSION['admin_id'] = $row['id'];
+                $_SESSION['admin_user'] = $row['username'];
+                header('Location: ' . getBaseUrl() . '/admin/dashboard.php');
+                exit;
+            }
         }
+        $error = 'Invalid username or password';
     }
-    $error = 'Invalid username or password';
 }
 ?>
 <!doctype html>
@@ -62,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="alert alert-danger"><?= sanitize($error) ?></div>
                         <?php endif; ?>
                         <form method="post">
+                            <?= getCSRFField() ?>
                             <div class="mb-3">
                                 <label class="form-label">Username</label>
                                 <input name="username" class="form-control" required>
@@ -76,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </form>
                         <div class="text-center mt-3 muted">Need help? Contact the system administrator.</div>
                         <div class="text-center mt-4">
-                            <a href="/Online_Voting_System/index.php" class="btn btn-outline-primary btn-lg px-4">
+                            <a href="<?= getBaseUrl() ?>/index.php" class="btn btn-outline-primary btn-lg px-4">
                                 <i class="fas fa-arrow-left me-2"></i>Back to Home
                             </a>
                         </div>

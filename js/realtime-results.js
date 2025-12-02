@@ -22,7 +22,7 @@ class RealTimeResults {
             this.updateResults();
         }, this.refreshInterval);
         
-        console.log('Real-time results started');
+
     }
 
     // Stop real-time updates
@@ -35,7 +35,7 @@ class RealTimeResults {
             this.intervalId = null;
         }
         
-        console.log('Real-time results stopped');
+
     }
 
     // Fetch and update results

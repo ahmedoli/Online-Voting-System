@@ -24,13 +24,14 @@ header('Content-Disposition: attachment; filename="' . $filename . '"');
 $output = fopen('php://output', 'w');
 
 // Add column headers
-fputcsv($output, ['Candidate Name', 'Party', 'Total Votes', 'Percentage']);
+fputcsv($output, ['Candidate Name', 'Position', 'Party', 'Total Votes', 'Percentage']);
 
 // Fetch candidate results
 if ($election_id) {
     // Export specific election
     $query = "
     SELECT 
+        c.position,
         c.candidate_name,
         c.party,
         COUNT(v.id) AS total_votes
@@ -38,7 +39,7 @@ if ($election_id) {
     LEFT JOIN vote_logs v ON v.candidate_id = c.id
     WHERE c.election_id = ?
     GROUP BY c.id
-    ORDER BY total_votes DESC";
+    ORDER BY c.position, total_votes DESC";
 
     $stmt = $mysqli->prepare($query);
     $stmt->bind_param('i', $election_id);
@@ -60,13 +61,14 @@ if ($election_id) {
     // Export all elections (fallback)
     $query = "
     SELECT 
+        c.position,
         c.candidate_name,
         c.party,
         COUNT(v.id) AS total_votes
     FROM candidates c
     LEFT JOIN vote_logs v ON v.candidate_id = c.id
     GROUP BY c.id
-    ORDER BY total_votes DESC";
+    ORDER BY c.position, total_votes DESC";
 
     $result = $mysqli->query($query);
 
@@ -76,7 +78,6 @@ if ($election_id) {
 }
 
 if (!$result) {
-    // If query fails, redirect to dashboard with error
     header("Location: dashboard.php?error=export_failed");
     exit();
 }
@@ -85,11 +86,10 @@ if (!$result) {
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
         $percentage = ($total_votes > 0) ? round(($row['total_votes'] / $total_votes) * 100, 2) : 0;
-        fputcsv($output, [$row['candidate_name'], $row['party'], $row['total_votes'], $percentage . '%']);
+        fputcsv($output, [$row['candidate_name'], $row['position'], $row['party'], $row['total_votes'], $percentage . '%']);
     }
 } else {
-    // If no results, add a message row
-    fputcsv($output, ['No voting results available yet', '', '', '']);
+    fputcsv($output, ['No voting results available yet', '', '', '', '']);
 }
 
 fclose($output);

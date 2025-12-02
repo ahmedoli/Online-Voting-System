@@ -11,8 +11,25 @@ header('Access-Control-Allow-Origin: *');
 require_once __DIR__ . '/db_connect.php';
 require_once __DIR__ . '/functions.php';
 
+// Basic rate limiting
+session_start();
+if (!isset($_SESSION['api_requests'])) {
+    $_SESSION['api_requests'] = [];
+}
+$now = time();
+$_SESSION['api_requests'] = array_filter($_SESSION['api_requests'], function ($time) use ($now) {
+    return ($now - $time) < 60; // Keep requests from last minute
+});
+if (count($_SESSION['api_requests']) > 30) {
+    http_response_code(429);
+    echo json_encode(['success' => false, 'message' => 'Rate limit exceeded']);
+    exit;
+}
+$_SESSION['api_requests'][] = $now;
+
 try {
     $election_id = isset($_GET['election_id']) ? (int)$_GET['election_id'] : null;
+    if ($election_id < 0) $election_id = null; // Validate positive integers only
     $results = [];
 
     if ($election_id) {
@@ -87,7 +104,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Error fetching results: ' . $e->getMessage(),
+        'message' => 'Unable to fetch results. Please try again later.',
         'timestamp' => time()
     ]);
 }
