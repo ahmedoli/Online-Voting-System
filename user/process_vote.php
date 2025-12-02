@@ -30,13 +30,6 @@ try {
     }
     $check->close();
 
-<<<<<<< HEAD
-
-
-
-
-    // Fetch only positions that actually have candidates
-=======
     error_log('Vote POST: ' . json_encode($_POST));
 
     $pos_stmt = $conn->prepare("SELECT position FROM candidates WHERE election_id = ? GROUP BY position HAVING COUNT(*) > 0");
@@ -59,17 +52,6 @@ try {
     }
     $pos_stmt->close();
 
-<<<<<<< HEAD
-    // Check all positions with candidates are present in POST (using slugs)
-    foreach ($positions as $slug) {
-        if (!isset($_POST[$slug]) || $_POST[$slug] === '' || !is_numeric($_POST[$slug])) {
-            $conn->rollback();
-
-            header("Location: dashboard.php?missing=1");
-            exit;
-        }
-        // Validate candidate exists and belongs to this election
-=======
     foreach ($positions as $slug) {
         if (!isset($_POST[$slug]) || $_POST[$slug] === '' || !is_numeric($_POST[$slug])) {
             $conn->rollback();
@@ -82,19 +64,12 @@ try {
         $validate_stmt->execute();
         if ($validate_stmt->get_result()->num_rows === 0) {
             $conn->rollback();
-<<<<<<< HEAD
-
-=======
             error_log("Invalid candidate selection: candidate_id={$_POST[$slug]}, election_id=$election_id, position={$slug_to_position[$slug]}");
             header("Location: dashboard.php?error=invalid_candidate");
             exit;
         }
         $validate_stmt->close();
     }
-
-<<<<<<< HEAD
-    // Insert votes securely, catch DB errors
-=======
     $success = true;
     $error_detail = '';
     foreach ($positions as $slug) {

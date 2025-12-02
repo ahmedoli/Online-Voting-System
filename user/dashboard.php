@@ -47,9 +47,6 @@ $voter_id = $_SESSION['voter_id'];
 $voter_name = isset($_SESSION['voter_name']) ? $_SESSION['voter_name'] : 'Unknown Voter';
 $voter_email = isset($_SESSION['voter_email']) ? $_SESSION['voter_email'] : 'No email';
 
-<<<<<<< HEAD
-// Fetch voter name from database if not in session (fallback for existing sessions)
-=======
 if ($voter_name === 'Unknown Voter') {
     $name_stmt = $conn->prepare("SELECT name FROM voters WHERE id = ?");
     $name_stmt->bind_param("i", $voter_id);
@@ -58,20 +55,13 @@ if ($voter_name === 'Unknown Voter') {
     if ($name_result->num_rows > 0) {
         $voter_data = $name_result->fetch_assoc();
         $voter_name = $voter_data['name'];
-        $_SESSION['voter_name'] = $voter_name; // Store it in session for future use
+        $_SESSION['voter_name'] = $voter_name;
     }
 }
 
 $message = '';
 $message_type = '';
 
-<<<<<<< HEAD
-// Handle URL parameters for vote results
-if (isset($_GET['success']) && $_GET['success'] == '1') {
-    $message = 'Your votes have been successfully recorded for all positions!';
-    $message_type = 'success';
-    // Clear URL parameters to prevent reshow on refresh
-=======
 if (isset($_GET['success']) && $_GET['success'] == '1') {
     $message = 'Your votes have been successfully recorded for all positions!';
     $message_type = 'success';
@@ -79,16 +69,10 @@ if (isset($_GET['success']) && $_GET['success'] == '1') {
 } elseif (isset($_GET['already']) && $_GET['already'] == '1') {
     $message = 'You have already voted in this election.';
     $message_type = 'error';
-<<<<<<< HEAD
-    // Clear URL parameters to prevent reshow on refresh  
-=======
     echo '<script>if (window.history.replaceState) { window.history.replaceState(null, null, window.location.pathname); }</script>';
 } elseif (isset($_GET['missing']) && $_GET['missing'] == '1') {
     $message = 'Please select a candidate for all positions before voting.';
     $message_type = 'error';
-<<<<<<< HEAD
-    // Clear URL parameters to prevent reshow on refresh
-=======
     echo '<script>if (window.history.replaceState) { window.history.replaceState(null, null, window.location.pathname); }</script>';
 } elseif (isset($_GET['error'])) {
     switch ($_GET['error']) {
@@ -105,18 +89,6 @@ if (isset($_GET['success']) && $_GET['success'] == '1') {
             $message = 'An error occurred while processing your vote.';
     }
     $message_type = 'error';
-<<<<<<< HEAD
-    // Clear URL parameters to prevent reshow on refresh
-    echo '<script>if (window.history.replaceState) { window.history.replaceState(null, null, window.location.pathname); }</script>';
-}
-
-// Handle vote submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vote_candidate'])) {
-    $candidate_id = (int)$_POST['candidate_id'];
-    $election_id = intval($_POST['election_id']);
-
-    $check_stmt = $conn->prepare("SELECT id FROM vote_logs WHERE voter_id = ? AND election_id = ? LIMIT 1");
-=======
     echo '<script>if (window.history.replaceState) { window.history.replaceState(null, null, window.location.pathname); }</script>';
 }
 
@@ -133,13 +105,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['vote_candidate'])) {
         $message = 'You have already voted in this election.';
         $message_type = 'error';
     } else {
-<<<<<<< HEAD
-        // Record the vote
-        $vote_stmt = $conn->prepare("INSERT INTO vote_logs (voter_id, election_id, candidate_id) VALUES (?, ?, ?)");
-        $vote_stmt->bind_param("iii", $voter_id, $election_id, $candidate_id);
-
-        if ($stmt->execute()) {
-=======
         $vote_stmt = $conn->prepare("INSERT INTO vote_logs (voter_id, election_id, candidate_id) VALUES (?, ?, ?)");
         $vote_stmt->bind_param("iii", $voter_id, $election_id, $candidate_id);
 
@@ -164,36 +129,24 @@ try {
         throw new Exception('Failed to fetch elections');
     }
 } catch (Exception $e) {
-<<<<<<< HEAD
-=======
     error_log('Elections fetch error: ' . $e->getMessage());
     $elections_result = false;
     $hasActiveElection = false;
     $active_elections = [];
 }
 
-<<<<<<< HEAD
-// Initialize variables
-=======
 $hasActiveElection = false;
 $active_elections = [];
-$user_id = $voter_id; // Use voter_id for consistency
-$alert_message = $message; // Use existing message variable
-$alert_type = ($message_type === 'success') ? 'success' : 'danger'; // Bootstrap alert types
+$user_id = $voter_id;
+$alert_message = $message;
+$alert_type = ($message_type === 'success') ? 'success' : 'danger';
 
-<<<<<<< HEAD
-// Process elections result
-=======
 if ($elections_result && $elections_result->num_rows > 0) {
     $hasActiveElection = true;
     while ($row = $elections_result->fetch_assoc()) {
         $active_elections[] = $row;
     }
 }
-
-<<<<<<< HEAD
-// FETCH VOTING HISTORY
-=======
 $history_stmt = $conn->prepare("
     SELECT v.election_id, v.position, v.candidate_id, c.candidate_name, e.name AS election_name
     FROM vote_logs v
@@ -396,9 +349,6 @@ if ($hasActiveElection) {
                                             </div>
 
                                             <?php
-<<<<<<< HEAD
-                                            // Check if voter has already voted in this election
-=======
                                             $voted_check = $conn->prepare("SELECT id FROM vote_logs WHERE voter_id = ? AND election_id = ?");
                                             $voted_check->bind_param("ii", $voter_id, $election['id']);
                                             $voted_check->execute();
@@ -416,22 +366,10 @@ if ($hasActiveElection) {
                                                 </div>
                                             <?php else: ?>
                                                 <?php
-<<<<<<< HEAD
-                                                // Get candidates grouped by position
-=======
                                                 $candidates_stmt = $conn->prepare("SELECT * FROM candidates WHERE election_id = ? ORDER BY candidate_name");
                                                 $candidates_stmt->bind_param("i", $election['id']);
                                                 $candidates_stmt->execute();
-                                                $candidates_result = $candidates_stmt->get_result();
-
-<<<<<<< HEAD
-                                                // Group candidates by position with proper case formatting
-                                                $positions = [];
-                                                while ($candidate = $candidates_result->fetch_assoc()) {
-                                                    $position = $candidate['position'] ?: 'General';
-                                                    // Normalize position display (Title Case)
-=======
-                                                $positions = [];
+                                                $candidates_result = $candidates_stmt->get_result();                                    $positions = [];
                                                 while ($candidate = $candidates_result->fetch_assoc()) {
                                                     $position = $candidate['position'] ?: 'General';
                                                     $position = ucwords(strtolower(trim($position)));
@@ -441,9 +379,6 @@ if ($hasActiveElection) {
                                                     $positions[$position][] = $candidate;
                                                 }
 
-<<<<<<< HEAD
-                                                // Sort positions by hierarchy
-=======
                                                 uksort($positions, function ($a, $b) {
                                                     return getPositionOrder($a) - getPositionOrder($b);
                                                 });
@@ -459,9 +394,6 @@ if ($hasActiveElection) {
                                                                     <i class="fas fa-award me-2"></i><?= htmlspecialchars($position) ?>
                                                                 </h6>
                                                                 <?php
-<<<<<<< HEAD
-                                                                // Use same slugify method as process_vote.php
-=======
                                                                 $position_slug = strtolower(trim($position));
                                                                 $position_slug = preg_replace('/[^a-z0-9]+/', '_', $position_slug);
                                                                 $position_slug = trim($position_slug, '_');
@@ -614,11 +546,6 @@ if ($hasActiveElection) {
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-<<<<<<< HEAD
-        window.addEventListener('error', function(e) {});
-
-        // Prevent form double submission
-=======
         window.addEventListener('error', function(e) {
             console.log('JavaScript error caught:', e.error);
         });
@@ -640,7 +567,4 @@ if ($hasActiveElection) {
     </script>
 </body>
 
-<<<<<<< HEAD
-</html>
-=======
 </html>
