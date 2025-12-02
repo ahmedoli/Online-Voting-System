@@ -369,7 +369,8 @@ if ($hasActiveElection) {
                                                 $candidates_stmt = $conn->prepare("SELECT * FROM candidates WHERE election_id = ? ORDER BY candidate_name");
                                                 $candidates_stmt->bind_param("i", $election['id']);
                                                 $candidates_stmt->execute();
-                                                $candidates_result = $candidates_stmt->get_result();                                    $positions = [];
+                                                $candidates_result = $candidates_stmt->get_result();
+                                                $positions = [];
                                                 while ($candidate = $candidates_result->fetch_assoc()) {
                                                     $position = $candidate['position'] ?: 'General';
                                                     $position = ucwords(strtolower(trim($position)));

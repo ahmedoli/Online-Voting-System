@@ -282,32 +282,32 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
                   <?php else: ?>
                     <div class="text-muted text-center py-4">No candidates found for this election</div>
                   <?php endif; ?>
+              </div>
+            </div>
+          <?php endwhile; ?>
+        <?php else: ?>
+          <div class="card">
+            <div class="card-body text-center">
+              <h5 class="text-muted">No elections found</h5>
+              <p class="text-muted">Create an election to see results here.</p>
             </div>
           </div>
-        <?php endwhile; ?>
-      <?php else: ?>
-        <div class="card">
-          <div class="card-body text-center">
-            <h5 class="text-muted">No elections found</h5>
-            <p class="text-muted">Create an election to see results here.</p>
-          </div>
+        <?php endif; ?>
+
+        <div class="text-center mt-4">
+          <a href="dashboard.php" class="btn btn-secondary px-4">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+          </a>
         </div>
-      <?php endif; ?>
-
-      <div class="text-center mt-4">
-        <a href="dashboard.php" class="btn btn-secondary px-4">
-          <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-        </a>
-      </div>
+          </div>
     </div>
-  </div>
 
-  <script>
-    // Auto-refresh the page every 30 seconds to show updated vote counts
-    setTimeout(function() {
-      window.location.reload();
-    }, 30000);
-  </script>
+    <script>
+      // Auto-refresh the page every 30 seconds to show updated vote counts
+      setTimeout(function() {
+        window.location.reload();
+      }, 30000);
+    </script>
 
 </body>
 
