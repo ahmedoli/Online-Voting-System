@@ -236,10 +236,6 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
                   $positions = [];
                   while ($candidate = $candidates_result->fetch_assoc()) {
                     $position = $candidate['position'] ?: 'General';
-                    // Normalize position display (Title Case)
-                  $positions = [];
-                  while ($candidate = $candidates_result->fetch_assoc()) {
-                    $position = $candidate['position'] ?: 'General';
                     $position = ucwords(strtolower(trim($position)));
                     if (!isset($positions[$position])) {
                       $positions[$position] = [];
@@ -286,7 +282,6 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
                   <?php else: ?>
                     <div class="text-muted text-center py-4">No candidates found for this election</div>
                   <?php endif; ?>
-              </div>
             </div>
           </div>
         <?php endwhile; ?>
