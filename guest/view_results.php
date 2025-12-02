@@ -2,7 +2,10 @@
 require_once __DIR__ . '/../includes/db_connect.php';
 require_once __DIR__ . '/../includes/functions.php';
 
+<<<<<<< HEAD
 // Function to define position hierarchy (declared once at the top)
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 function getPositionOrder($position)
 {
     $order = [
@@ -26,7 +29,6 @@ function getPositionOrder($position)
     return isset($order[$pos_lower]) ? $order[$pos_lower] : 50;
 }
 
-// Fetch all elections with end_date
 $elections = $conn->query("
     SELECT id, name, start_date, end_date 
     FROM elections 
@@ -147,7 +149,6 @@ if (!$elections) {
                     </div>
 
                     <?php
-                    // Fetch candidates grouped by position
                     $stmt = $conn->prepare("
                         SELECT c.candidate_name, c.party, c.position, COUNT(vl.id) as votes
                         FROM candidates c
@@ -160,13 +161,15 @@ if (!$elections) {
                     $stmt->execute();
                     $res = $stmt->get_result();
 
-                    // Group candidates by position and find overall winner (per position)
                     $positions = [];
                     $overall_winner = null;
                     $max_votes = 0;
                     while ($candidate = $res->fetch_assoc()) {
                         $position = $candidate['position'] ?: 'General';
+<<<<<<< HEAD
                         // Normalize position display (Title Case)
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                         $position = ucwords(strtolower(trim($position)));
                         if (!isset($positions[$position])) {
                             $positions[$position] = [];
@@ -174,11 +177,17 @@ if (!$elections) {
                         $positions[$position][] = $candidate;
                     }
 
+<<<<<<< HEAD
                     // Sort positions by hierarchy
                     uksort($positions, function ($a, $b) {
                         return getPositionOrder($a) - getPositionOrder($b);
                     });
                     // Find overall winner (highest votes among all positions)
+=======
+                    uksort($positions, function ($a, $b) {
+                        return getPositionOrder($a) - getPositionOrder($b);
+                    });
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                     foreach ($positions as $cands) {
                         foreach ($cands as $cand) {
                             if ($cand['votes'] > $max_votes) {
@@ -196,7 +205,10 @@ if (!$elections) {
                         <div class="alert alert-success mb-4">
                             <h6 class="mb-3"><i class="fas fa-trophy me-2"></i>Winners by Position</h6>
                             <?php
+<<<<<<< HEAD
                             // Find winner for each position in this election
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                             $position_winners = [];
                             foreach ($positions as $position => $candidates) {
                                 $max_votes = 0;

@@ -1,12 +1,10 @@
 <?php
-// Start session only if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once '../includes/db_connect.php';
 require_once '../includes/functions.php';
 
-// Check if user is logged in
 if (!isset($_SESSION['voter_id'])) {
     header('Location: login.php');
     exit();
@@ -14,7 +12,6 @@ if (!isset($_SESSION['voter_id'])) {
 
 $voter_id = $_SESSION['voter_id'];
 
-// Fetch voter information from database
 $stmt = $conn->prepare("SELECT name, email, phone, id_number, id_type, registered_at FROM voters WHERE id = ?");
 $stmt->bind_param("i", $voter_id);
 $stmt->execute();
@@ -28,7 +25,6 @@ if ($result->num_rows === 0) {
 $voter = $result->fetch_assoc();
 $stmt->close();
 
-// Profile is read-only as per requirements
 ?>
 <!DOCTYPE html>
 <html lang="en">

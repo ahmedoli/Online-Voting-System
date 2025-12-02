@@ -16,11 +16,17 @@ if (!isset($_POST['election_id'])) {
 }
 $election_id = (int)$_POST['election_id'];
 
+<<<<<<< HEAD
 // Use transaction to prevent race conditions and ensure atomic voting
 $conn->autocommit(false);
 
 try {
     // Check if already voted for this election (with row lock)
+=======
+$conn->autocommit(false);
+
+try {
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     $check = $conn->prepare("SELECT 1 FROM vote_logs WHERE voter_id = ? AND election_id = ? FOR UPDATE");
     $check->bind_param("ii", $user_id, $election_id);
     $check->execute();
@@ -32,11 +38,16 @@ try {
     }
     $check->close();
 
+<<<<<<< HEAD
 
 
 
 
     // Fetch only positions that actually have candidates
+=======
+    error_log('Vote POST: ' . json_encode($_POST));
+
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     $pos_stmt = $conn->prepare("SELECT position FROM candidates WHERE election_id = ? GROUP BY position HAVING COUNT(*) > 0");
     $pos_stmt->bind_param("i", $election_id);
     $pos_stmt->execute();
@@ -57,6 +68,7 @@ try {
     }
     $pos_stmt->close();
 
+<<<<<<< HEAD
     // Check all positions with candidates are present in POST (using slugs)
     foreach ($positions as $slug) {
         if (!isset($_POST[$slug]) || $_POST[$slug] === '' || !is_numeric($_POST[$slug])) {
@@ -66,19 +78,35 @@ try {
             exit;
         }
         // Validate candidate exists and belongs to this election
+=======
+    foreach ($positions as $slug) {
+        if (!isset($_POST[$slug]) || $_POST[$slug] === '' || !is_numeric($_POST[$slug])) {
+            $conn->rollback();
+            error_log("Missing or invalid vote for position: $slug (available POST keys: " . implode(', ', array_keys($_POST)) . ")");
+            header("Location: dashboard.php?missing=1");
+            exit;
+        }
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
         $validate_stmt = $conn->prepare("SELECT 1 FROM candidates WHERE id = ? AND election_id = ? AND position = ?");
         $validate_stmt->bind_param("iis", $_POST[$slug], $election_id, $slug_to_position[$slug]);
         $validate_stmt->execute();
         if ($validate_stmt->get_result()->num_rows === 0) {
             $conn->rollback();
+<<<<<<< HEAD
 
+=======
+            error_log("Invalid candidate selection: candidate_id={$_POST[$slug]}, election_id=$election_id, position={$slug_to_position[$slug]}");
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
             header("Location: dashboard.php?error=invalid_candidate");
             exit;
         }
         $validate_stmt->close();
     }
 
+<<<<<<< HEAD
     // Insert votes securely, catch DB errors
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     $success = true;
     $error_detail = '';
     foreach ($positions as $slug) {
@@ -91,6 +119,7 @@ try {
     }
 
     if ($success) {
+<<<<<<< HEAD
         // Commit the transaction
         $conn->commit();
         header("Location: dashboard.php?success=1");
@@ -107,6 +136,20 @@ try {
     header("Location: dashboard.php?error=transaction_fail");
 } finally {
     // Restore autocommit
+=======
+        $conn->commit();
+        header("Location: dashboard.php?success=1");
+    } else {
+        $conn->rollback();
+        error_log('Vote error: ' . $error_detail);
+        header("Location: dashboard.php?error=vote_fail");
+    }
+} catch (Exception $e) {
+    $conn->rollback();
+    error_log('Vote transaction error: ' . $e->getMessage());
+    header("Location: dashboard.php?error=transaction_fail");
+} finally {
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     $conn->autocommit(true);
 }
 exit;

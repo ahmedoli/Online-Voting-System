@@ -1,24 +1,26 @@
 <?php
 
-/**
- * Live Results API Endpoint
- * Provides real-time voting results for AJAX requests
- */
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
 require_once __DIR__ . '/db_connect.php';
 require_once __DIR__ . '/functions.php';
 
+<<<<<<< HEAD
 // Basic rate limiting
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 session_start();
 if (!isset($_SESSION['api_requests'])) {
     $_SESSION['api_requests'] = [];
 }
 $now = time();
 $_SESSION['api_requests'] = array_filter($_SESSION['api_requests'], function ($time) use ($now) {
+<<<<<<< HEAD
     return ($now - $time) < 60; // Keep requests from last minute
+=======
+    return ($now - $time) < 60;
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 });
 if (count($_SESSION['api_requests']) > 30) {
     http_response_code(429);
@@ -29,14 +31,16 @@ $_SESSION['api_requests'][] = $now;
 
 try {
     $election_id = isset($_GET['election_id']) ? (int)$_GET['election_id'] : null;
+<<<<<<< HEAD
     if ($election_id < 0) $election_id = null; // Validate positive integers only
+=======
+    if ($election_id < 0) $election_id = null;
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     $results = [];
 
     if ($election_id) {
-        // Get specific election results
         $elections = [$election_id];
     } else {
-        // Get all active elections
         $election_query = "SELECT id FROM elections WHERE start_date <= CURDATE() AND end_date >= CURDATE()";
         $election_result = $conn->query($election_query);
         $elections = [];
@@ -46,7 +50,6 @@ try {
     }
 
     foreach ($elections as $eid) {
-        // Get election info
         $election_stmt = $conn->prepare("SELECT id, name, description FROM elections WHERE id = ?");
         $election_stmt->bind_param("i", $eid);
         $election_stmt->execute();
@@ -54,7 +57,6 @@ try {
 
         if (!$election_data) continue;
 
-        // Get candidates and their vote counts from vote_logs
         $candidates_stmt = $conn->prepare("
             SELECT 
                 c.id,
@@ -101,6 +103,7 @@ try {
         'formatted_time' => date('Y-m-d H:i:s')
     ]);
 } catch (Exception $e) {
+    error_log('Live results error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,

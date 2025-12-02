@@ -8,7 +8,6 @@ require_once '../includes/functions.php';
 $message = '';
 $step = isset($_SESSION['reset_step']) ? $_SESSION['reset_step'] : 1;
 
-// Step 1: Request OTP
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
     $email = trim($_POST['email']);
     $check = $conn->prepare("SELECT id FROM voters WHERE email=?");
@@ -21,7 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
         $_SESSION['reset_voter_id'] = $voter['id'];
         $_SESSION['reset_email'] = $email;
 
-        // Use your existing OTP generator
         if (generateAndSendOTP($voter['id'], $email)) {
             $_SESSION['reset_step'] = 2;
             $step = 2;
@@ -34,7 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
     }
 }
 
-// Step 2: Verify OTP
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['otp'])) {
     $otp = trim($_POST['otp']);
     if (!isset($_SESSION['reset_voter_id'])) {
@@ -52,7 +49,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['otp'])) {
     }
 }
 
-// Step 3: Reset password
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_password'])) {
     $new_password = trim($_POST['new_password']);
     if (!isset($_SESSION['reset_voter_id'])) {
@@ -66,7 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_password'])) {
             $stmt->bind_param("si", $hashed, $voter_id);
             $stmt->execute();
 
-            // Clear session reset data
             unset($_SESSION['reset_step'], $_SESSION['reset_voter_id'], $_SESSION['reset_email']);
 
             $_SESSION['success_message'] = "Password reset successful! You can now login.";

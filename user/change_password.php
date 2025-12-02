@@ -1,5 +1,9 @@
 <?php
+<<<<<<< HEAD
 if (session_status() == PHP_SESSION_NONE) {
+=======
+if (session_status() === PHP_SESSION_NONE) {
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     session_start();
 }
 require_once '../includes/db_connect.php';
@@ -13,7 +17,6 @@ if (!isset($_SESSION['voter_id'])) {
 $voter_id = $_SESSION['voter_id'];
 $voter_name = $_SESSION['voter_name'] ?? 'User';
 
-// Handle password change
 $message = '';
 $message_type = '';
 
@@ -22,7 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $new_password = $_POST['new_password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
 
-    // Validation
     if (empty($current_password)) {
         $message = 'Current password is required.';
         $message_type = 'error';
@@ -36,7 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         $message = 'New password and confirmation do not match.';
         $message_type = 'error';
     } else {
-        // Verify current password
         $stmt = $conn->prepare("SELECT password FROM voters WHERE id = ?");
         $stmt->bind_param("i", $voter_id);
         $stmt->execute();
@@ -48,12 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         } else {
             $user_data = $result->fetch_assoc();
 
-            // Check if current password is correct
             if (password_verify($current_password, $user_data['password'])) {
-                // Hash new password
                 $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
-                // Update password
                 $update_stmt = $conn->prepare("UPDATE voters SET password = ? WHERE id = ?");
                 $update_stmt->bind_param("si", $hashed_password, $voter_id);
 
@@ -299,7 +297,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
             return true;
         }
 
-        // Real-time password confirmation check
         document.getElementById('confirm_password').addEventListener('input', function() {
             const newPassword = document.getElementById('new_password').value;
             const confirmPassword = this.value;

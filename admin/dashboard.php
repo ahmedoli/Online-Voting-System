@@ -5,7 +5,6 @@ require_once __DIR__ . '/../includes/db_connect.php';
 
 $admin_user = $_SESSION['admin_user'] ?? 'Admin';
 
-// Safe database queries with error handling
 try {
     $elections_result = $mysqli->query('SELECT COUNT(*) AS c FROM elections');
     $elections_count = $elections_result ? $elections_result->fetch_object()->c : 0;
@@ -31,7 +30,6 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <style>
-        /* Fix admin dashboard styling */
         .admin-sidebar {
             background: linear-gradient(135deg, #6e245e 0%, #854d8a 100%) !important;
             border-radius: 12px;
@@ -129,7 +127,6 @@ try {
             color: #6c757d;
         }
 
-        /* Layout fixes */
         .admin-container {
             width: 100%;
             max-width: none;
@@ -154,7 +151,6 @@ try {
             width: 100%;
         }
 
-        /* Responsive design */
         @media (max-width: 768px) {
             .admin-wrap {
                 flex-direction: column;

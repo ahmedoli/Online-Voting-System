@@ -3,12 +3,16 @@ require_once __DIR__ . '/../includes/functions.php';
 requireAdmin();
 require_once __DIR__ . '/../includes/db_connect.php';
 
-if (!empty($_GET['delete'])) {
-    $id = (int)$_GET['delete'];
-    $stmt = db_prepare('DELETE FROM candidates WHERE id = ?');
-    $stmt->bind_param('i', $id);
-    $stmt->execute();
-    flash_set('success', 'Candidate deleted');
+if (!empty($_GET['delete']) && !empty($_GET['token'])) {
+    if (verifyCSRFToken($_GET['token'])) {
+        $id = (int)$_GET['delete'];
+        $stmt = db_prepare('DELETE FROM candidates WHERE id = ?');
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        flash_set('success', 'Candidate deleted');
+    } else {
+        flash_set('error', 'Invalid request token');
+    }
     header('Location: manage_candidates.php');
     exit;
 }
@@ -61,7 +65,7 @@ $res = $mysqli->query('SELECT c.*, e.name as election_name FROM candidates c LEF
                         <td><?= sanitize($row['election_name']) ?></td>
                         <td><?= (int)$row['votes'] ?></td>
                         <td>
-                            <a class="btn btn-sm btn-danger" href="?delete=<?= (int)$row['id'] ?>" onclick="return confirm('Delete candidate?');">Delete</a>
+                            <a class="btn btn-sm btn-danger" href="?delete=<?= (int)$row['id'] ?>&token=<?= generateCSRFToken() ?>" onclick="return confirm('Delete candidate?');">Delete</a>
                         </td>
                     </tr>
                 <?php endwhile; ?>

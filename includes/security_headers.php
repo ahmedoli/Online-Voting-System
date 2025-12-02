@@ -1,5 +1,6 @@
 <?php
 
+<<<<<<< HEAD
 /**
  * Security Headers and Configuration
  * Include this file to set secure headers across the application
@@ -10,13 +11,21 @@ if (!defined('SECURITY_HEADERS_LOADED')) {
     define('SECURITY_HEADERS_LOADED', true);
 
     // Security headers
+=======
+if (!defined('SECURITY_HEADERS_LOADED')) {
+    define('SECURITY_HEADERS_LOADED', true);
+
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     header('X-Frame-Options: DENY');
     header('X-XSS-Protection: 1; mode=block');
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
 
+<<<<<<< HEAD
     // CSP for basic protection (adjust based on your needs)
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     $csp = "default-src 'self'; " .
         "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
@@ -25,7 +34,10 @@ if (!defined('SECURITY_HEADERS_LOADED')) {
         "connect-src 'self';";
     header("Content-Security-Policy: $csp");
 
+<<<<<<< HEAD
     // Remove server information
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     if (function_exists('header_remove')) {
         header_remove('X-Powered-By');
         header_remove('Server');

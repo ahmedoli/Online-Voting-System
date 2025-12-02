@@ -119,14 +119,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-decoration: underline;
         }
 
-        /* ✅ Fix: Vertically centered eye icon */
         .password-wrapper {
             position: relative;
         }
 
         .password-wrapper input {
             padding-right: 50px;
-            /* Add space for the eye icon */
         }
 
         .password-wrapper button {

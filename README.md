@@ -68,6 +68,7 @@ mysql -u root -p online_voting_system < database/database.sql
 
 ### 3. System Configuration
 
+<<<<<<< HEAD
 Edit `includes/db_connect.php` with your database credentials:
 
 ```php
@@ -78,6 +79,29 @@ $db_name = 'online_voting_system';
 ```
 
 Configure email settings in `includes/email_config.php` (optional):
+=======
+**Database Setup:**
+
+```bash
+# Copy the example database config file
+cp includes/db_connect.example.php includes/db_connect.php
+
+# Edit includes/db_connect.php with your database credentials:
+# $db_host = '127.0.0.1';
+# $db_user = 'your_username'; 
+# $db_pass = 'your_secure_password';
+# $db_name = 'online_voting_system';
+```
+
+**Email Configuration (Optional but Recommended):**
+
+```bash
+# Copy the example email config file  
+cp includes/email_config.example.php includes/email_config.php
+
+# Edit includes/email_config.php with your SMTP settings
+```
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 
 ```php
 // Email configuration for OTP delivery

@@ -3,7 +3,10 @@ require_once __DIR__ . '/../includes/functions.php';
 requireAdmin();
 require_once __DIR__ . '/../includes/db_connect.php';
 
+<<<<<<< HEAD
 // Function to define position hierarchy (declared once at the top)
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 function getPositionOrder($position)
 {
   $order = [
@@ -111,7 +114,10 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
 
       <!-- Elections Results -->
       <?php
+<<<<<<< HEAD
       // Get all elections with dates
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
       $elections_query = "SELECT id, name, description, start_date, end_date FROM elections ORDER BY created_at DESC";
       $elections_result = $mysqli->query($elections_query);
 
@@ -134,7 +140,10 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
             </div>
             <div class="card-body">
               <?php
+<<<<<<< HEAD
               // Check election status
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
               $now = date('Y-m-d');
               $is_completed = ($election['end_date'] < $now);
               ?>
@@ -144,7 +153,10 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
                 <div class="alert alert-success mb-4">
                   <h6 class="mb-3"><i class="fas fa-trophy me-2"></i>Winners by Position</h6>
                   <?php
+<<<<<<< HEAD
                   // Get winners for this specific election
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                   $election_winners_query = "
                     SELECT 
                       c.candidate_name,
@@ -163,7 +175,10 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
                   $stmt->execute();
                   $election_winners_result = $stmt->get_result();
 
+<<<<<<< HEAD
                   // Find winner for each position
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                   $election_position_winners = [];
                   while ($candidate = $election_winners_result->fetch_assoc()) {
                     $position = ucwords(strtolower(trim($candidate['position'])));
@@ -175,7 +190,10 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
                     }
                   }
 
+<<<<<<< HEAD
                   // Sort positions by hierarchy
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                   uksort($election_position_winners, function ($a, $b) {
                     return getPositionOrder($a) - getPositionOrder($b);
                   });
@@ -205,7 +223,6 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
               <div class="table-responsive">
                 <table class="table table-hover align-middle">
                   <?php
-                  // Get candidates for this election grouped by position
                   $candidates_query = "
                     SELECT 
                       c.candidate_name,
@@ -223,7 +240,6 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
                   $candidates_stmt->execute();
                   $candidates_result = $candidates_stmt->get_result();
 
-                  // Calculate total votes for this election
                   $election_total_query = "
                     SELECT COUNT(v.id) AS total 
                     FROM vote_logs v 
@@ -235,11 +251,17 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
                   $election_total_result = $election_total_stmt->get_result();
                   $election_total_votes = $election_total_result->fetch_assoc()['total'];
 
+<<<<<<< HEAD
                   // Group candidates by position with proper case formatting
                   $positions = [];
                   while ($candidate = $candidates_result->fetch_assoc()) {
                     $position = $candidate['position'] ?: 'General';
                     // Normalize position display (Title Case)
+=======
+                  $positions = [];
+                  while ($candidate = $candidates_result->fetch_assoc()) {
+                    $position = $candidate['position'] ?: 'General';
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                     $position = ucwords(strtolower(trim($position)));
                     if (!isset($positions[$position])) {
                       $positions[$position] = [];
@@ -247,14 +269,16 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
                     $positions[$position][] = $candidate;
                   }
 
+<<<<<<< HEAD
                   // Sort positions by hierarchy
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                   uksort($positions, function ($a, $b) {
                     return getPositionOrder($a) - getPositionOrder($b);
                   });
 
                   if (!empty($positions)):
                     foreach ($positions as $position => $candidates):
-                      // Calculate total votes for this position only
                       $position_total_votes = 0;
                       foreach ($candidates as $c) {
                         $position_total_votes += (int)$c['total_votes'];
@@ -310,7 +334,10 @@ $turnout = ($total_voters > 0) ? round(($total_votes / $total_voters) * 100, 2) 
   </div>
 
   <script>
+<<<<<<< HEAD
     // Auto-refresh the page every 30 seconds to show updated vote counts
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     setTimeout(function() {
       window.location.reload();
     }, 30000);

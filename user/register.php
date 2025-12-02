@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once '../includes/db_connect.php';
 require_once '../includes/functions.php';
@@ -7,7 +7,10 @@ $message = '';
 $message_type = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+<<<<<<< HEAD
     // Verify CSRF token
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
         $message = 'Invalid request. Please try again.';
         $message_type = 'error';
@@ -19,7 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_number = sanitize($_POST['id_number'] ?? '');
         $id_type = sanitize($_POST['id_type'] ?? '');
 
+<<<<<<< HEAD
         // Enhanced validation using new functions
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
         if (empty($name) || empty($phone) || empty($email) || empty($password) || empty($id_number) || empty($id_type)) {
             $message = 'All fields are required.';
             $message_type = 'error';
@@ -251,7 +257,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Password strength indicator
         document.getElementById('password').addEventListener('input', function() {
             const password = this.value;
             const strengthBar = document.getElementById('strength-bar');
@@ -269,7 +274,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             strengthBar.style.background = strength > 0 ? colors[strength - 1] : '#e5e7eb';
         });
 
-        // ID type selection
         document.querySelectorAll('input[name="id_type"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 document.querySelectorAll('.id-option').forEach(opt => opt.classList.remove('active'));
@@ -280,7 +284,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             });
         });
 
-        // Initialize first option as active
         document.querySelector('.id-option').classList.add('active');
     </script>
 </body>

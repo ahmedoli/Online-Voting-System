@@ -3,7 +3,10 @@ require_once __DIR__ . '/../includes/functions.php';
 requireAdmin();
 require_once __DIR__ . '/../includes/db_connect.php';
 
+<<<<<<< HEAD
 // Backlog 6: Secure Vote Log - Fetch secure vote logs (only voter ID and timestamp)
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 $logs_query = "
     SELECT 
         vl.id,
@@ -18,7 +21,10 @@ $logs_query = "
 ";
 $logs_result = $mysqli->query($logs_query);
 
+<<<<<<< HEAD
 // Get vote statistics
+=======
+>>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 $stats_query = "
     SELECT 
         COUNT(*) as total_votes,

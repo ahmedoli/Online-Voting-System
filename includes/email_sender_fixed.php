@@ -1,11 +1,5 @@
 <?php
 
-/**
- * Simple and Clean Email Sender for OTP Delivery
- * Compatible with all PHP versions
- */
-
-// Load email configuration safely
 function getEmailConfig()
 {
     static $config = null;
@@ -14,7 +8,6 @@ function getEmailConfig()
         if (file_exists(__DIR__ . '/email_config.php')) {
             $config = include __DIR__ . '/email_config.php';
 
-            // Validate that config was loaded properly
             if (!is_array($config) || !isset($config['smtp'])) {
                 error_log("Email config file exists but didn't return valid array");
                 $config = getDefaultEmailConfig();
@@ -28,39 +21,29 @@ function getEmailConfig()
     return $config;
 }
 
-// Default email configuration
 function getDefaultEmailConfig()
 {
     return [
         'smtp' => [
             'host' => 'smtp.gmail.com',
             'port' => 587,
-            'username' => 'mohammedoli376@gmail.com',
-            'password' => 'nqqk xoel sarm wbfc',
+            'username' => '',
+            'password' => '',
             'encryption' => 'tls',
             'auth' => true
         ],
         'from' => [
-            'email' => 'mohammedoli376@gmail.com',
+            'email' => 'noreply@votingsystem.local',
             'name' => 'Online Voting System'
         ],
         'debug' => false
     ];
 }
 
-/**
- * Main function to send OTP email
- * 
- * @param string $email Recipient email
- * @param string $otp 6-digit OTP code
- * @return bool Success status
- */
 function sendOTPEmail($email, $otp)
 {
-    // Always log for debugging
     error_log("OTP Email Request: {$otp} to {$email} at " . date('Y-m-d H:i:s'));
 
-    // Try PHPMailer first, fallback to simple mail
     if (tryPHPMailerSend($email, $otp)) {
         return true;
     }
@@ -68,15 +51,10 @@ function sendOTPEmail($email, $otp)
     return sendSimpleOTPEmail($email, $otp);
 }
 
-/**
- * Try sending with PHPMailer if available
- */
 function tryPHPMailerSend($email, $otp)
 {
-    // Get email configuration
     $email_config = getEmailConfig();
 
-    // Check if PHPMailer is available
     $phpmailer_paths = [
         __DIR__ . '/../vendor/PHPMailer-master/src/PHPMailer.php',
         __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php'
@@ -99,10 +77,8 @@ function tryPHPMailerSend($email, $otp)
     }
 
     try {
-        // Create PHPMailer instance using full class name
         $mail = new PHPMailer\PHPMailer\PHPMailer(true);
 
-        // SMTP settings - with null safety
         $mail->isSMTP();
         $mail->Host = $email_config['smtp']['host'] ?? 'smtp.gmail.com';
         $mail->SMTPAuth = $email_config['smtp']['auth'] ?? true;
@@ -111,7 +87,6 @@ function tryPHPMailerSend($email, $otp)
         $mail->SMTPSecure = $email_config['smtp']['encryption'] ?? 'tls';
         $mail->Port = $email_config['smtp']['port'] ?? 587;
 
-        // Enable debug if configured
         if (isset($email_config['debug']) && $email_config['debug']) {
             $mail->SMTPDebug = 2;
             $mail->Debugoutput = 'error_log';
@@ -119,7 +94,6 @@ function tryPHPMailerSend($email, $otp)
             $mail->SMTPDebug = 0;
         }
 
-        // Email content - Use SMTP username as sender for Gmail compatibility
         $fromEmail = $email_config['smtp']['username'] ?? 'noreply@votingsystem.local';
         $fromName = $email_config['from']['name'] ?? 'Online Voting System';
         $mail->setFrom($fromEmail, $fromName);
@@ -130,7 +104,6 @@ function tryPHPMailerSend($email, $otp)
         $mail->Body = createOTPEmailHTML($otp);
         $mail->AltBody = createOTPEmailText($otp);
 
-        // Send
         $result = $mail->send();
 
         if ($result) {
@@ -144,9 +117,6 @@ function tryPHPMailerSend($email, $otp)
     return false;
 }
 
-/**
- * Send OTP using simple PHP mail function
- */
 function sendSimpleOTPEmail($email, $otp)
 {
     $subject = "Online Voting System - Your OTP Code";
@@ -157,23 +127,17 @@ function sendSimpleOTPEmail($email, $otp)
     $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
     $headers .= "X-Mailer: PHP/" . phpversion();
 
-    // Try to send
     $result = @mail($email, $subject, $message, $headers);
 
-    // Log result
     if ($result) {
         error_log("Simple mail success: OTP sent to {$email}");
     } else {
         error_log("Simple mail failed for {$email}");
     }
 
-    // Always return true for development (so login doesn't fail due to email issues)
     return true;
 }
 
-/**
- * Create HTML email content
- */
 function createOTPEmailHTML($otp)
 {
     return '
@@ -225,9 +189,6 @@ function createOTPEmailHTML($otp)
 </html>';
 }
 
-/**
- * Create plain text email content
- */
 function createOTPEmailText($otp)
 {
     return "========================================\n" .
