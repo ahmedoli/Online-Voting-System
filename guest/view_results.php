@@ -2,9 +2,6 @@
 require_once __DIR__ . '/../includes/db_connect.php';
 require_once __DIR__ . '/../includes/functions.php';
 
-<<<<<<< HEAD
-// Function to define position hierarchy (declared once at the top)
-=======
 function getPositionOrder($position)
 {
     $order = [
@@ -165,23 +162,12 @@ if (!$elections) {
                     $max_votes = 0;
                     while ($candidate = $res->fetch_assoc()) {
                         $position = $candidate['position'] ?: 'General';
-<<<<<<< HEAD
-                        // Normalize position display (Title Case)
-=======
                         $position = ucwords(strtolower(trim($position)));
                         if (!isset($positions[$position])) {
                             $positions[$position] = [];
                         }
                         $positions[$position][] = $candidate;
                     }
-
-<<<<<<< HEAD
-                    // Sort positions by hierarchy
-                    uksort($positions, function ($a, $b) {
-                        return getPositionOrder($a) - getPositionOrder($b);
-                    });
-                    // Find overall winner (highest votes among all positions)
-=======
                     uksort($positions, function ($a, $b) {
                         return getPositionOrder($a) - getPositionOrder($b);
                     });
@@ -202,9 +188,6 @@ if (!$elections) {
                         <div class="alert alert-success mb-4">
                             <h6 class="mb-3"><i class="fas fa-trophy me-2"></i>Winners by Position</h6>
                             <?php
-<<<<<<< HEAD
-                            // Find winner for each position in this election
-=======
                             $position_winners = [];
                             foreach ($positions as $position => $candidates) {
                                 $max_votes = 0;
