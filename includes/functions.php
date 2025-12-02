@@ -1,7 +1,19 @@
 <?php
-// Start session only if not already started
+
+require_once __DIR__ . '/error_handler.php';
+
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.use_only_cookies', 1);
+    ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    ini_set('session.cookie_samesite', 'Strict');
+    ini_set('session.gc_maxlifetime', 3600);
     session_start();
+
+    if (!isset($_SESSION['initiated'])) {
+        session_regenerate_id(true);
+        $_SESSION['initiated'] = true;
+    }
 }
 require_once __DIR__ . '/db_connect.php';
 
@@ -18,9 +30,26 @@ function isAdminLoggedIn()
 function requireAdmin()
 {
     if (!isAdminLoggedIn()) {
-        header('Location: /Online_Voting_System/admin/login.php');
+        header('Location: ' . getBaseUrl() . '/admin/login.php');
         exit;
     }
+}
+
+function getBaseUrl()
+{
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+    $host = $_SERVER['HTTP_HOST'];
+    $script = $_SERVER['SCRIPT_NAME'];
+    $path = dirname($script);
+
+    $basePath = preg_replace('#/(admin|user|includes|guest)$#', '', $path);
+
+    return $protocol . $host . $basePath;
+}
+
+function getAssetUrl($path)
+{
+    return getBaseUrl() . '/' . ltrim($path, '/');
 }
 
 function flash_set($key, $msg)
@@ -38,29 +67,18 @@ function flash_get($key)
     return null;
 }
 
-/**
- * Generate secure vote hash for tamper-proof logging
- * Backlog 6: Secure vote log implementation
- */
+
 function generateVoteHash($voter_id, $election_id, $candidate_id, $timestamp)
 {
-    // Create a secure hash using voter data + timestamp + salt
     $salt = 'SECURE_VOTE_SALT_' . date('Y-m-d');
     $data = $voter_id . '|' . $election_id . '|' . $candidate_id . '|' . $timestamp . '|' . $salt;
     return hash('sha256', $data);
 }
 
-/**
- * Log secure vote entry with hash
- * Backlog 6: Tamper-proof vote logging
- */
 function logSecureVote($voter_id, $election_id, $candidate_id, $position)
 {
     global $mysqli, $conn;
-
-    // Use whichever connection is available
     $db = $mysqli ? $mysqli : $conn;
-
     if (!$db) {
         error_log("logSecureVote: No database connection available");
         return false;
@@ -68,22 +86,30 @@ function logSecureVote($voter_id, $election_id, $candidate_id, $position)
 
     $timestamp = date('Y-m-d H:i:s');
     $vote_hash = generateVoteHash($voter_id, $election_id, $candidate_id, $timestamp);
-
     error_log("logSecureVote: Attempting to log vote - voter_id=$voter_id, election_id=$election_id, candidate_id=$candidate_id, position=$position, hash=$vote_hash");
 
-    // Insert vote with secure hash and position
-    $stmt = $db->prepare("INSERT INTO vote_logs (voter_id, election_id, candidate_id, position, vote_hash, voted_at) VALUES (?, ?, ?, ?, ?, ?)");
+    $check_stmt = $db->prepare("SELECT 1 FROM vote_logs WHERE voter_id = ? AND election_id = ? AND position = ?");
+    if ($check_stmt) {
+        $check_stmt->bind_param("iis", $voter_id, $election_id, $position);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
+        if ($check_result->num_rows > 0) {
+            error_log("logSecureVote: Duplicate vote attempt detected - voter already voted for this position");
+            $check_stmt->close();
+            return false;
+        }
+        $check_stmt->close();
+    }
 
+    $stmt = $db->prepare("INSERT INTO vote_logs (voter_id, election_id, candidate_id, position, vote_hash, voted_at) VALUES (?, ?, ?, ?, ?, ?)");
     if (!$stmt) {
         error_log("logSecureVote: MySQL prepare failed - " . $db->error);
-        // Check if position column exists, if not add it
         $check_column = $db->query("SHOW COLUMNS FROM vote_logs LIKE 'position'");
         if (!$check_column || $check_column->num_rows === 0) {
             error_log("logSecureVote: position column missing, attempting to add it");
             $add_column = $db->query("ALTER TABLE vote_logs ADD COLUMN position VARCHAR(100) NOT NULL DEFAULT ''");
             if ($add_column) {
                 error_log("logSecureVote: position column added successfully");
-                // Try prepare again
                 $stmt = $db->prepare("INSERT INTO vote_logs (voter_id, election_id, candidate_id, position, vote_hash, voted_at) VALUES (?, ?, ?, ?, ?, ?)");
             }
         }
@@ -91,25 +117,34 @@ function logSecureVote($voter_id, $election_id, $candidate_id, $position)
             return false;
         }
     }
-
     $stmt->bind_param("iiisss", $voter_id, $election_id, $candidate_id, $position, $vote_hash, $timestamp);
     $result = $stmt->execute();
-
     if (!$result) {
         error_log("logSecureVote: MySQL execute failed - " . $stmt->error);
         error_log("logSecureVote: Query was: INSERT INTO vote_logs (voter_id, election_id, candidate_id, position, vote_hash, voted_at) VALUES ($voter_id, $election_id, $candidate_id, '$position', '$vote_hash', '$timestamp')");
+        $stmt->close();
+        return false;
     } else {
         error_log("logSecureVote: Vote logged successfully with ID " . $db->insert_id);
-    }
 
+        $update_stmt = $db->prepare("UPDATE candidates SET votes = votes + 1 WHERE id = ?");
+        if ($update_stmt) {
+            $update_stmt->bind_param("i", $candidate_id);
+            $update_result = $update_stmt->execute();
+            if (!$update_result) {
+                error_log("logSecureVote: Failed to update candidate vote count - " . $update_stmt->error);
+            } else {
+                error_log("logSecureVote: Candidate vote count updated successfully for candidate_id=$candidate_id");
+            }
+            $update_stmt->close();
+        } else {
+            error_log("logSecureVote: Failed to prepare candidate update query - " . $db->error);
+        }
+    }
     $stmt->close();
     return $result;
 }
 
-/**
- * Verify vote integrity using hash
- * Backlog 6: Tamper detection
- */
 function verifyVoteIntegrity($vote_log_id)
 {
     global $mysqli;
@@ -148,10 +183,6 @@ function verifyVoteIntegrity($vote_log_id)
     return $vote['vote_hash'] === $expected_hash;
 }
 
-/**
- * Get secure vote statistics
- * Backlog 6: Security reporting
- */
 function getSecureVoteStats()
 {
     global $mysqli;
@@ -167,7 +198,7 @@ function getSecureVoteStats()
 
     $result = $mysqli->query($query);
     return $result ? $result->fetch_assoc() : [];
-} // OTP Management Functions
+}
 function generateOTP()
 {
     return str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -176,12 +207,12 @@ function generateOTP()
 function storeOTP($voter_id, $otp)
 {
     global $conn;
-    $expires_at = date('Y-m-d H:i:s', time() + 120); // 2 minutes expiration
+    $expires_at = date('Y-m-d H:i:s', time() + 120);
 
-    // Ensure OTP is clean (remove any whitespace)
+
     $otp = trim($otp);
 
-    // Delete existing OTPs for this voter
+
     $stmt = $conn->prepare("DELETE FROM voter_otps WHERE voter_id = ?");
     if (!$stmt) {
         error_log("MySQL prepare failed: " . $conn->error);
@@ -191,7 +222,7 @@ function storeOTP($voter_id, $otp)
     $stmt->execute();
     $stmt->close();
 
-    // Insert new OTP
+
     $stmt = $conn->prepare("INSERT INTO voter_otps (voter_id, otp_code, expires_at) VALUES (?, ?, ?)");
     if (!$stmt) {
         error_log("MySQL prepare failed: " . $conn->error);
@@ -206,14 +237,14 @@ function verifyOTP($voter_id, $otp)
 {
     global $conn;
 
-    // Clean input
+
     $voter_id = (int)$voter_id;
     $otp = trim($otp);
 
-    // Verify the OTP with debugging
+
     error_log("OTP Verification: voter_id=$voter_id, otp='$otp'");
 
-    // First check what OTPs exist for this voter
+
     $debug_stmt = $conn->prepare("SELECT otp_code, expires_at FROM voter_otps WHERE voter_id = ?");
     if (!$debug_stmt) {
         error_log("MySQL prepare failed: " . $conn->error);
@@ -229,43 +260,40 @@ function verifyOTP($voter_id, $otp)
     }
     $debug_stmt->close();
 
-    // Get OTP record for this voter and code
-    $stmt = $conn->prepare("SELECT id, expires_at FROM voter_otps WHERE voter_id = ? AND otp_code = ?");
+
+    $stmt = $conn->prepare("SELECT id, otp_code, expires_at FROM voter_otps WHERE voter_id = ?");
     if (!$stmt) {
         error_log("MySQL prepare failed: " . $conn->error);
         return false;
     }
-    $stmt->bind_param("is", $voter_id, $otp);
+    $stmt->bind_param("i", $voter_id);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    if ($result->num_rows == 1) {
-        $row = $result->fetch_assoc();
+    $valid_otp_found = false;
+    $current_timestamp = time();
+
+    while ($row = $result->fetch_assoc()) {
         $expires_timestamp = strtotime($row['expires_at']);
-        $current_timestamp = time();
 
-        error_log("OTP found - Expires: {$row['expires_at']} (" . date('Y-m-d H:i:s', $expires_timestamp) . ")");
-        error_log("Current time: " . date('Y-m-d H:i:s', $current_timestamp));
-
-        if ($expires_timestamp > $current_timestamp) {
+        if (hash_equals($row['otp_code'], $otp) && $expires_timestamp > $current_timestamp) {
+            $valid_otp_found = true;
             error_log("OTP Verification SUCCESS - Valid and not expired");
-            // Delete used OTP
-            $delete_stmt = $conn->prepare("DELETE FROM voter_otps WHERE voter_id = ?");
-            if ($delete_stmt) {
-                $delete_stmt->bind_param("i", $voter_id);
-                $delete_stmt->execute();
-                $delete_stmt->close();
-            }
-            $stmt->close();
-            return true;
-        } else {
-            error_log("OTP Verification FAILED - OTP expired");
-            $stmt->close();
-            return false;
+            break;
         }
+    }
+    $stmt->close();
+
+    if ($valid_otp_found) {
+        $delete_stmt = $conn->prepare("DELETE FROM voter_otps WHERE voter_id = ?");
+        if ($delete_stmt) {
+            $delete_stmt->bind_param("i", $voter_id);
+            $delete_stmt->execute();
+            $delete_stmt->close();
+        }
+        return true;
     } else {
-        error_log("OTP Verification FAILED - no matching voter/OTP combination found");
-        $stmt->close();
+        error_log("OTP Verification FAILED - no matching voter/OTP combination found or expired");
         return false;
     }
 }
@@ -273,9 +301,63 @@ function generateAndSendOTP($voter_id, $email)
 {
     $otp = generateOTP();
     if (storeOTP($voter_id, $otp)) {
-        // Use fixed email sender that handles both PHPMailer and simple mail
+
         require_once __DIR__ . '/email_sender_fixed.php';
         return sendOTPEmail($email, $otp);
+    }
+    return false;
+}
+
+function generateCSRFToken()
+{
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function verifyCSRFToken($token)
+{
+    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+}
+
+function getCSRFField()
+{
+    $token = generateCSRFToken();
+    return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($token) . '">';
+}
+
+function validateEmail($email)
+{
+    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+}
+
+function validatePhone($phone)
+{
+    $phone = preg_replace('/[^0-9]/', '', $phone);
+    return strlen($phone) >= 10 && strlen($phone) <= 15;
+}
+
+function validateName($name)
+{
+    $name = trim($name);
+    return !empty($name) && strlen($name) >= 2 && strlen($name) <= 100 &&
+        preg_match('/^[a-zA-Z\s\-\.\']+$/', $name);
+}
+
+function validatePassword($password)
+{
+    return !empty($password) && strlen($password) >= 6;
+}
+
+function validateIdNumber($id_number, $id_type)
+{
+    $id_number = preg_replace('/[^a-zA-Z0-9]/', '', $id_number);
+    if ($id_type === 'NID') {
+        return strlen($id_number) >= 10 && strlen($id_number) <= 20 &&
+            preg_match('/^[0-9]+$/', $id_number);
+    } else if ($id_type === 'Student') {
+        return strlen($id_number) >= 6 && strlen($id_number) <= 20;
     }
     return false;
 }

@@ -1,0 +1,54 @@
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+error.log
+access.log
+
+# Temporary Files
+*.tmp
+*.temp
+*.cache
+
+# Backup Files
+*.bak
+*.backup
+*.old
+
+# Dependencies (if using Composer in future)
+vendor/
+node_modules/
+
+# Runtime Files
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and Testing
+coverage/
+.nyc_output/
+.coverage
+*.cover
+
+# Build Output
+dist/
+build/

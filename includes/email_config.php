@@ -1,11 +1,6 @@
 <?php
 
-/**
- * Clean Email Configuration - Recreated to ensure no corruption
- */
-
 return [
-    // SMTP Server Configuration
     'smtp' => [
         'host'       => 'smtp.gmail.com',
         'port'       => 587,
@@ -15,23 +10,19 @@ return [
         'password'   => 'nqqk xoel sarm wbfc',
     ],
 
-    // Email Sender Information  
     'from' => [
         'email' => 'mohammedoli376@gmail.com',
         'name'  => 'Online Voting System'
     ],
 
-    // Email Settings
     'settings' => [
         'subject_prefix' => '[OVS] ',
         'otp_expiry'     => 2,
         'max_retries'    => 3,
     ],
 
-    // Debug Configuration
     'debug' => false,
 
-    // Email Templates
     'templates' => [
         'otp_subject' => 'Your Voting System OTP Code',
         'otp_footer'  => 'This is an automated message. Please do not reply.',

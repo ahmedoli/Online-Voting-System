@@ -4,183 +4,234 @@ A secure web-based voting platform built with PHP and MySQL for conducting onlin
 
 ## Overview
 
-This system allows voters to participate in elections online with secure authentication, while administrators can manage elections and view real-time results.
+This system allows voters to participate in elections online with secure authentication and OTP verification, while providing administrators with comprehensive election management tools.
 
 ## Features
 
 ### For Voters
-- User registration with email verification
-- OTP-based secure login
-- Vote in active elections
-- View voting history
-- Real-time election results
 
-### For Administrators
-- Create and manage elections
-- Add candidates to elections
-- View live voting results
-- Export results to CSV
-- Monitor secure vote logs
+- Secure user registration with email verification
+- OTP-based authentication for each login session
+- Participate in active elections with intuitive interface
+- View personal voting history and status
+- Access real-time election results
+- Password recovery functionality
+
+### For Election Management
+
+- Create and manage multiple elections with flexible scheduling
+- Add candidates to different election positions
+- Monitor live voting statistics and participation rates
+- Export detailed results to CSV format
+- View comprehensive audit logs of all voting activity
+- Manage election timelines with start/end date controls
 
 ### Security Features
-- OTP email verification for login
-- One vote per user per election
-- SHA-256 encrypted vote logging
-- Secure session management
-- SQL injection protection
 
-## Requirements
+- OTP email verification for every login session
+- One vote per user per election enforcement
+- SHA-256 encrypted vote logging with secure hash generation
+- Advanced session management and timeout protection
+- Comprehensive SQL injection and XSS protection
+- Rate limiting and brute force protection
+- Secure headers implementation (CSP, HSTS, etc.)
 
-- PHP 7.4 or higher
-- MySQL 5.7 or higher
-- Web server (Apache/Nginx)
-- SMTP server for emails (optional)
+## Technical Requirements
 
-## Installation
+- **PHP**: 8.0 or higher (with MySQLi extension)
+- **MySQL**: 5.7 or higher
+- **Web Server**: Apache/Nginx with mod_rewrite enabled
+- **Email Server**: SMTP server for OTP delivery (optional but recommended)
+- **SSL Certificate**: Recommended for production deployment
 
-### 1. Setup Files
+## Installation Guide
+
+### 1. File Setup
+
 ```bash
-# Download or clone the project
-# Copy to your web server directory (e.g., C:\xampp\htdocs\)
+# Clone or download the project
+git clone https://github.com/yourusername/Online_Voting_System.git
+# Move to your web server directory
+cp -r Online_Voting_System /var/www/html/
+# Or for XAMPP: C:\xampp\htdocs\
 ```
 
-### 2. Database Setup
-```sql
--- Create database
-CREATE DATABASE online_voting_system;
+### 2. Database Configuration
 
--- Import the schema
-# Use phpMyAdmin to import database/database.sql
-# OR use command line:
+```sql
+-- Create the database
+CREATE DATABASE online_voting_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Import the complete schema
 mysql -u root -p online_voting_system < database/database.sql
 ```
 
-### 3. Configuration
-Edit `includes/db_connect.php`:
+### 3. System Configuration
+
+**Database Setup:**
+
+```bash
+# Copy the example database config file
+cp includes/db_connect.example.php includes/db_connect.php
+
+# Edit includes/db_connect.php with your database credentials:
+# $db_host = '127.0.0.1';
+# $db_user = 'your_username'; 
+# $db_pass = 'your_secure_password';
+# $db_name = 'online_voting_system';
+```
+
+**Email Configuration (Optional but Recommended):**
+
+```bash
+# Copy the example email config file  
+cp includes/email_config.example.php includes/email_config.php
+
+# Edit includes/email_config.php with your SMTP settings
+```
+
 ```php
-$db_host = '127.0.0.1';
-$db_user = 'root';
-$db_pass = '';  // Your MySQL password
-$db_name = 'online_voting_system';
-```
-
-### 4. Access URLs
-
-| Page | URL | Credentials |
-|------|-----|-------------|
-| Homepage | `http://localhost/Online_Voting_System/` | - |
-| Admin Login | `http://localhost/Online_Voting_System/admin/login.php` | admin / admin123 |
-| Admin Dashboard | `http://localhost/Online_Voting_System/admin/dashboard.php` | After login |
-| Voter Registration | `http://localhost/Online_Voting_System/user/register.php` | - |
-| Voter Login | `http://localhost/Online_Voting_System/user/login.php` | Your registered email |
-| Voter Dashboard | `http://localhost/Online_Voting_System/user/dashboard.php` | After login + OTP |
-| Public Results | `http://localhost/Online_Voting_System/guest/view_results.php` | - |
-
-## Complete Project Structure
-
-```
-Online_Voting_System/
-├── admin/
-│   ├── add_candidate.php           # Add new candidate form
-│   ├── add_election.php            # Add new election form
-│   ├── dashboard.php               # Admin main dashboard
-│   ├── export_results.php          # CSV export functionality
-│   ├── fetch_results.php           # AJAX results data
-│   ├── login.php                   # Admin login page
-│   ├── logout.php                  # Admin logout
-│   ├── logs.php                    # Secure vote logs viewer
-│   ├── manage_candidates.php       # Candidate management
-│   ├── manage_elections.php        # Election management
-│   ├── process_add_candidate.php   # Process candidate creation
-│   ├── process_add_election.php    # Process election creation
-│   └── view_results.php            # Live election results
-├── user/
-│   ├── dashboard.php               # Voter main dashboard
-│   ├── forgot_password.php         # Password reset page
-│   ├── login.php                   # Voter login with OTP
-│   ├── logout.php                  # Voter logout
-│   ├── register.php                # Voter registration
-│   ├── resend_otp.php              # Resend OTP functionality
-│   └── verify_otp.php              # OTP verification page
-├── guest/
-│   └── view_results.php            # Public election results
-├── includes/
-│   ├── db_connect.php              # Database connection
-│   ├── email_config.php            # Email configuration
-│   ├── email_sender_fixed.php      # Email functionality
-│   ├── functions.php               # Core system functions
-│   └── get_live_results.php        # Live results AJAX
-├── css/
-│   └── style.css                   # Main stylesheet
-├── js/
-│   ├── realtime-results.js         # Real-time results updates
-│   └── script.js                   # General JavaScript functions
-├── database/
-│   └── database.sql                # Database schema and setup
-├── vendor/
-│   └── PHPMailer-master/
-│       ├── LICENSE                 # PHPMailer license
-│       └── src/
-│           ├── Exception.php       # PHPMailer exception handler
-│           ├── PHPMailer.php       # Main PHPMailer class
-│           └── SMTP.php            # SMTP functionality
-├── index.php                       # Landing page
-└── README.md                       # Project documentation
-```
-
-## Usage
-
-### For Voters
-1. Register with email and phone number
-2. Verify email with OTP code
-3. Login and verify with OTP for each session
-4. Vote in available elections
-5. View results after voting
-
-### For Administrators
-1. Login to admin panel
-2. Create new elections with start/end dates
-3. Add candidates to elections
-4. Monitor live results and statistics
-5. Export results as needed
-
-## Email Configuration (Optional)
-
-To enable OTP emails, configure `includes/email_config.php`:
-```php
+// Email configuration for OTP delivery
 $email_config = [
     'smtp' => [
-        'host' => 'smtp.gmail.com',
+        'host' => 'your-smtp-server.com',
         'port' => 587,
-        'username' => 'your-email@gmail.com',
+        'username' => 'your-email@domain.com',
         'password' => 'your-app-password',
         'encryption' => 'tls'
     ]
 ];
 ```
 
+### 4. Access Points
+
+| Function | URL Path | Description |
+|----------|----------|-------------|
+| **Homepage** | `/Online_Voting_System/` | Landing page with system overview |
+| **Voter Registration** | `/user/register.php` | New user account creation |
+| **Voter Login** | `/user/login.php` | Secure login with OTP verification |
+| **Voter Dashboard** | `/user/dashboard.php` | Main voting interface and history |
+| **Public Results** | `/guest/view_results.php` | Live election results (public access) |
+| **Management Panel** | `/admin/` | Election administration interface |
+
+## Project Structure
+
+```texttext
+Online_Voting_System/
+├── 📁 admin/                       # Administration Panel
+│   ├── add_candidate.php           # Candidate registration form
+│   ├── add_election.php            # Election creation interface
+│   ├── dashboard.php               # Administrative overview
+│   ├── export_results.php          # CSV export functionality
+│   ├── index.php                   # Admin landing page
+│   ├── login.php                   # Administrative authentication
+│   ├── logout.php                  # Session termination
+│   ├── logs.php                    # Audit trail viewer
+│   ├── manage_candidates.php       # Candidate management tools
+│   ├── manage_elections.php        # Election lifecycle management
+│   ├── process_add_candidate.php   # Candidate creation handler
+│   ├── process_add_election.php    # Election creation handler
+│   └── view_results.php            # Real-time results dashboard
+├── 📁 user/                        # Voter Interface
+│   ├── change_password.php         # Password update functionality
+│   ├── dashboard.php               # Main voter interface
+│   ├── forgot_password.php         # Password recovery system
+│   ├── index.php                   # User portal landing
+│   ├── login.php                   # OTP-secured authentication
+│   ├── logout.php                  # Secure session cleanup
+│   ├── process_vote.php            # Vote processing engine
+│   ├── profile.php                 # User profile management
+│   ├── register.php                # New voter registration
+│   ├── resend_otp.php              # OTP re-delivery system
+│   └── verify_otp.php              # OTP validation handler
+├── 📁 guest/                       # Public Access
+│   └── view_results.php            # Anonymous results viewing
+├── 📁 includes/                    # Core System Files
+│   ├── db_connect.php              # Database connection handler
+│   ├── email_config.php            # SMTP configuration
+│   ├── email_sender_fixed.php      # Email delivery system
+│   ├── error_handler.php           # Centralized error management
+│   ├── functions.php               # Core utility functions
+│   ├── get_live_results.php        # Live results API endpoint
+│   ├── otp_send.php                # OTP generation and delivery
+│   └── security_headers.php        # Security headers implementation
+├── 📁 css/                         # Styling
+│   └── style.css                   # Main stylesheet
+├── 📁 js/                          # Client-side Scripts
+│   ├── realtime-results.js         # Live results updates
+│   └── script.js                   # General JavaScript utilities
+├── 📁 database/                    # Database Schema
+│   └── database.sql                # Complete database structure
+├── 📁 error_pages/                 # Error Handling
+│   └── 500.html                    # Server error page
+├── 📁 vendor/                      # Third-party Libraries
+│   └── PHPMailer-master/           # Email library
+├── index.php                       # System entry point
+└── README.md                       # Documentation
+```
+
+## Usage Instructions
+
+### Voter Workflow
+
+1. **Registration**: Create account with email and personal information
+2. **Email Verification**: Confirm email address via OTP
+3. **Secure Login**: Authenticate with email + OTP for each session
+4. **Vote Casting**: Select candidates for available election positions
+5. **Result Viewing**: Access live results after completing votes
+
+### Administration Workflow
+
+1. **System Access**: Login to administrative panel
+2. **Election Setup**: Create elections with scheduling parameters
+3. **Candidate Management**: Add candidates to specific positions
+4. **Monitoring**: Track participation rates and voting progress
+5. **Results Management**: Export final results and audit reports
+
+## Security Implementation
+
+- **Authentication**: Multi-factor with email + OTP verification
+- **Session Security**: Secure session handling with regeneration
+- **Data Protection**: Prepared statements preventing SQL injection
+- **Input Validation**: Comprehensive server-side validation
+- **Rate Limiting**: Protection against automated attacks
+- **Audit Logging**: Complete transaction trail with SHA-256 hashing
+- **Error Handling**: Secure error messages preventing information disclosure
+
 ## Troubleshooting
 
-**Database Connection Issues:**
-- Check MySQL service is running
-- Verify credentials in `db_connect.php`
+**Database Issues:**
 
-**Email Not Working:**
-- Check SMTP settings
-- Verify firewall allows email ports
-- Check spam folder for OTP emails
+- Verify MySQL service status
+- Check database credentials in `includes/db_connect.php`
+- Ensure proper character encoding (utf8mb4)
 
-**Vote Not Recording:**
-- Check if `vote_hash` column exists in `vote_logs` table
-- Verify user hasn't already voted in the election
+**Email Delivery Problems:**
+
+- Verify SMTP configuration in `includes/email_config.php`
+- Check firewall settings for email ports (587, 465)
+- Review spam/junk folders for OTP messages
+
+**Voting Issues:**
+
+- Confirm user email verification status
+- Check election active status and timing
+- Verify candidate assignments to elections
+
+**Performance Optimization:**
+
+- Enable PHP OPcache for better performance
+- Configure MySQL query cache
+- Implement proper server-side caching
 
 ## License
 
-MIT License - see LICENSE file for details.
+This project is released under the MIT License.
 
-## Built With
+## Technology Stack
 
-- PHP - Server-side scripting
-- MySQL - Database
-- Bootstrap 5 - UI framework
-- PHPMailer - Email functionality
+- **Backend**: PHP 8+ with MySQLi
+- **Frontend**: Bootstrap 5.3.2 + Custom CSS
+- **Email System**: PHPMailer with SMTP support
+- **Security**: Custom implementation with industry best practices
+- **Database**: MySQL 5.7+ with optimized schema design

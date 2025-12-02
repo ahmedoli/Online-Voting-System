@@ -1,5 +1,5 @@
 <?php
-// Start session
+require_once '../includes/security_headers.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -9,7 +9,6 @@ require_once '../includes/functions.php';
 $message = '';
 $message_type = '';
 
-// ✅ Show success message after password reset (from forgot_password.php)
 if (isset($_SESSION['success_message'])) {
     $message = $_SESSION['success_message'];
     $message_type = 'success';
@@ -17,44 +16,46 @@ if (isset($_SESSION['success_message'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $login_input = trim($_POST['login_input']);
-    $password = trim($_POST['password']);
-
-    // Validate input
-    if (empty($login_input) || empty($password)) {
-        $message = "Please enter your email/phone and password.";
+    if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
+        $message = "Invalid request. Please try again.";
         $message_type = "error";
     } else {
-        // Check if voter exists
-        $stmt = $conn->prepare("SELECT * FROM voters WHERE email=? OR phone=? LIMIT 1");
-        $stmt->bind_param("ss", $login_input, $login_input);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $login_input = sanitize($_POST['login_input'] ?? '');
+        $password = $_POST['password'] ?? '';
 
-        if ($result->num_rows === 1) {
-            $voter = $result->fetch_assoc();
-            if (password_verify($password, $voter['password'])) {
-                // Store voter temp session for OTP
-                $_SESSION['temp_voter_id'] = $voter['id'];
-                $_SESSION['temp_voter_email'] = $voter['email'];
+        if (empty($login_input) || empty($password)) {
+            $message = "Please enter your email/phone and password.";
+            $message_type = "error";
+        } else {
+            $stmt = $conn->prepare("SELECT * FROM voters WHERE email=? OR phone=? LIMIT 1");
+            $stmt->bind_param("ss", $login_input, $login_input);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-                // Send OTP to email
-                if (generateAndSendOTP($voter['id'], $voter['email'])) {
-                    header("Location: verify_otp.php");
-                    exit();
+            if ($result->num_rows === 1) {
+                $voter = $result->fetch_assoc();
+                if (password_verify($password, $voter['password'])) {
+                    session_regenerate_id(true);
+                    $_SESSION['temp_voter_id'] = $voter['id'];
+                    $_SESSION['temp_voter_email'] = $voter['email'];
+
+                    if (generateAndSendOTP($voter['id'], $voter['email'])) {
+                        header("Location: verify_otp.php");
+                        exit();
+                    } else {
+                        $message = "Failed to send OTP. Please try again.";
+                        $message_type = "error";
+                    }
                 } else {
-                    $message = "Failed to send OTP. Please try again.";
+                    $message = "Incorrect password. Please try again.";
                     $message_type = "error";
                 }
             } else {
-                $message = "Incorrect password. Please try again.";
+                $message = "No account found with that email or phone.";
                 $message_type = "error";
             }
-        } else {
-            $message = "No account found with that email or phone.";
-            $message_type = "error";
+            $stmt->close();
         }
-        $stmt->close();
     }
 }
 ?>
@@ -118,14 +119,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-decoration: underline;
         }
 
-        /* ✅ Fix: Vertically centered eye icon */
         .password-wrapper {
             position: relative;
         }
 
         .password-wrapper input {
             padding-right: 50px;
-            /* Add space for the eye icon */
         }
 
         .password-wrapper button {
@@ -165,6 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
 
                 <form method="POST" class="needs-validation" novalidate>
+                    <?= getCSRFField() ?>
                     <div class="mb-3">
                         <label class="form-label"><i class="fas fa-envelope me-1"></i> Email or Phone</label>
                         <input type="text" name="login_input" class="form-control" placeholder="Enter your email or phone" required>

@@ -3,8 +3,12 @@ CREATE TABLE IF NOT EXISTS admins (
   username VARCHAR(50) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL
 );
+-- Default admin account with hashed password 'admin123'
 INSERT INTO admins (username, password)
-VALUES ('admin', 'admin123') ON DUPLICATE KEY
+VALUES (
+    'admin',
+    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
+  ) ON DUPLICATE KEY
 UPDATE username = username;
 CREATE TABLE IF NOT EXISTS elections (
   id INT AUTO_INCREMENT PRIMARY KEY,

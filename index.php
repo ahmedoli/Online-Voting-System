@@ -7,13 +7,14 @@
     <title>Online Voting System - Secure Digital Democracy</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="/Online_Voting_System/css/style.css">
+    <?php require_once __DIR__ . '/includes/functions.php'; ?>
+    <link rel="stylesheet" href="<?= getAssetUrl('css/style.css') ?>">
 </head>
 
 <body>
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/Online_Voting_System/index.php">
+            <a class="navbar-brand" href="<?= getAssetUrl('index.php') ?>">
                 <span class="logo-badge">OV</span>
                 <span style="font-weight:700">Online Voting</span>
             </a>
@@ -23,9 +24,9 @@
 
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="/Online_Voting_System/guest/view_results.php">Results</a></li>
-                    <li class="nav-item nav-cta me-2"><a class="btn btn-primary btn-sm" href="/Online_Voting_System/user/login.php">Vote Now</a></li>
-                    <li class="nav-item nav-cta"><a class="btn btn-outline-brand btn-sm" href="/Online_Voting_System/admin/login.php">Admin Panel</a></li>
+                    <li class="nav-item"><a class="nav-link" href="<?= getAssetUrl('guest/view_results.php') ?>">Results</a></li>
+                    <li class="nav-item nav-cta me-2"><a class="btn btn-primary btn-sm" href="<?= getAssetUrl('user/login.php') ?>">Vote Now</a></li>
+                    <li class="nav-item nav-cta"><a class="btn btn-outline-brand btn-sm" href="<?= getAssetUrl('admin/login.php') ?>">Admin Panel</a></li>
                 </ul>
             </div>
         </div>
@@ -40,13 +41,13 @@
                         <h1>🗳️ Secure Online Voting System</h1>
                         <p class="lead">Experience democracy in the digital age. Cast your vote securely, view real-time results, and participate in transparent elections from anywhere.</p>
                         <div class="d-flex flex-wrap gap-3 mt-4">
-                            <a class="btn btn-brand btn-lg px-4" href="/Online_Voting_System/user/login.php">
+                            <a class="btn btn-brand btn-lg px-4" href="<?= getAssetUrl('user/login.php') ?>">
                                 <i class="fas fa-vote-yea me-2"></i>Vote Now
                             </a>
-                            <a class="btn btn-outline-secondary btn-lg px-4" href="/Online_Voting_System/admin/login.php">
+                            <a class="btn btn-outline-secondary btn-lg px-4" href="<?= getAssetUrl('admin/login.php') ?>">
                                 <i class="fas fa-cog me-2"></i>Admin Panel
                             </a>
-                            <a class="btn btn-outline-brand btn-lg px-4" href="/Online_Voting_System/guest/view_results.php">
+                            <a class="btn btn-outline-brand btn-lg px-4" href="<?= getAssetUrl('guest/view_results.php') ?>">
                                 <i class="fas fa-chart-bar me-2"></i>View Results
                             </a>
 
@@ -91,7 +92,12 @@
                         </div>
                     </div>
                     <div class="col-md-5 text-center">
-                        <img src="/Online_Voting_System/js/placeholder-illustration.svg" alt="voting illustration" style="max-width:320px;opacity:0.95;border-radius:8px">
+                        <div style="max-width:320px;height:240px;background:linear-gradient(135deg,#667eea22,#764ba222);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+                            <div style="text-align:center;color:#667eea;">
+                                <i class="fas fa-vote-yea" style="font-size:4rem;margin-bottom:1rem;"></i>
+                                <div style="font-size:1.1rem;font-weight:600;">Secure Digital Voting</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -163,7 +169,7 @@
             </div>
         </section>
     </main>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>

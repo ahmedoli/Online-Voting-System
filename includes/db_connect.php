@@ -10,31 +10,29 @@ $db_user = 'root';
 $db_pass = '';
 $db_name = 'online_voting_system';
 
-// Set MySQLi error reporting (only if function exists)
 if (function_exists('mysqli_report')) {
     mysqli_report(MYSQLI_REPORT_OFF);
 }
 
 $mysqli = new mysqli($db_host, $db_user, $db_pass);
 if ($mysqli->connect_errno) {
+    error_log("Database connection failed: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error);
     http_response_code(500);
-    echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
-    exit;
+    die("Database connection error. Please try again later.");
 }
 
 if (!$mysqli->select_db($db_name)) {
     $createSql = "CREATE DATABASE IF NOT EXISTS `" . $mysqli->real_escape_string($db_name) . "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
     if (!$mysqli->query($createSql)) {
+        error_log("Failed to create database: " . $mysqli->error);
         http_response_code(500);
-        echo "Failed to create database: " . $mysqli->error;
-        exit;
+        die("Database setup error. Please contact administrator.");
     }
     $mysqli->select_db($db_name);
 }
 
 $mysqli->set_charset('utf8mb4');
 
-// Create alias for backward compatibility
 $conn = $mysqli;
 
 $check = $mysqli->query("SHOW TABLES LIKE 'admins'");
@@ -43,9 +41,7 @@ if ($check && $check->num_rows === 0) {
     if (is_readable($sqlFile)) {
         $sql = file_get_contents($sqlFile);
         if ($sql !== false && trim($sql) !== '') {
-            // Run multiple statements
             if ($mysqli->multi_query($sql)) {
-                // Clear results
                 do {
                     if ($res = $mysqli->store_result()) {
                         $res->free();
