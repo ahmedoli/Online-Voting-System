@@ -7,9 +7,6 @@ $message = '';
 $message_type = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-<<<<<<< HEAD
-    // Verify CSRF token
-=======
     if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
         $message = 'Invalid request. Please try again.';
         $message_type = 'error';
@@ -20,10 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = $_POST['password'] ?? '';
         $id_number = sanitize($_POST['id_number'] ?? '');
         $id_type = sanitize($_POST['id_type'] ?? '');
-
-<<<<<<< HEAD
-        // Enhanced validation using new functions
-=======
         if (empty($name) || empty($phone) || empty($email) || empty($password) || empty($id_number) || empty($id_type)) {
             $message = 'All fields are required.';
             $message_type = 'error';

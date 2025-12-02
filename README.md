@@ -68,7 +68,6 @@ mysql -u root -p online_voting_system < database/database.sql
 
 ### 3. System Configuration
 
-<<<<<<< HEAD
 Edit `includes/db_connect.php` with your database credentials:
 
 ```php
@@ -79,7 +78,6 @@ $db_name = 'online_voting_system';
 ```
 
 Configure email settings in `includes/email_config.php` (optional):
-=======
 **Database Setup:**
 
 ```bash
