@@ -6,9 +6,6 @@ header('Access-Control-Allow-Origin: *');
 require_once __DIR__ . '/db_connect.php';
 require_once __DIR__ . '/functions.php';
 
-<<<<<<< HEAD
-// Basic rate limiting
-=======
 session_start();
 if (!isset($_SESSION['api_requests'])) {
     $_SESSION['api_requests'] = [];
@@ -26,9 +23,6 @@ $_SESSION['api_requests'][] = $now;
 
 try {
     $election_id = isset($_GET['election_id']) ? (int)$_GET['election_id'] : null;
-<<<<<<< HEAD
-    if ($election_id < 0) $election_id = null; // Validate positive integers only
-=======
     if ($election_id < 0) $election_id = null;
     $results = [];
 
