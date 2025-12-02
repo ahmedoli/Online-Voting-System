@@ -9,18 +9,13 @@ require_once __DIR__ . '/functions.php';
 <<<<<<< HEAD
 // Basic rate limiting
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 session_start();
 if (!isset($_SESSION['api_requests'])) {
     $_SESSION['api_requests'] = [];
 }
 $now = time();
 $_SESSION['api_requests'] = array_filter($_SESSION['api_requests'], function ($time) use ($now) {
-<<<<<<< HEAD
-    return ($now - $time) < 60; // Keep requests from last minute
-=======
     return ($now - $time) < 60;
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 });
 if (count($_SESSION['api_requests']) > 30) {
     http_response_code(429);
@@ -35,7 +30,6 @@ try {
     if ($election_id < 0) $election_id = null; // Validate positive integers only
 =======
     if ($election_id < 0) $election_id = null;
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     $results = [];
 
     if ($election_id) {

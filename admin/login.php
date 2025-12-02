@@ -13,7 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <<<<<<< HEAD
     // Verify CSRF token
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
         $error = 'Invalid request. Please try again.';
     } else {
@@ -40,7 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (password_verify($password, $row['password'])) {
                 $password_valid = true;
             } elseif ($password === $row['password']) {
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                 $password_valid = true;
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
                 $update_stmt = db_prepare('UPDATE admins SET password = ? WHERE id = ?');
@@ -53,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <<<<<<< HEAD
                 // Regenerate session ID on login to prevent session fixation
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                 session_regenerate_id(true);
                 $_SESSION['admin_id'] = $row['id'];
                 $_SESSION['admin_user'] = $row['username'];

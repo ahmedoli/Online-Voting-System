@@ -101,7 +101,6 @@ cp includes/email_config.example.php includes/email_config.php
 
 # Edit includes/email_config.php with your SMTP settings
 ```
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 
 ```php
 // Email configuration for OTP delivery

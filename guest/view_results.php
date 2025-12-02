@@ -5,7 +5,6 @@ require_once __DIR__ . '/../includes/functions.php';
 <<<<<<< HEAD
 // Function to define position hierarchy (declared once at the top)
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 function getPositionOrder($position)
 {
     $order = [
@@ -169,7 +168,6 @@ if (!$elections) {
 <<<<<<< HEAD
                         // Normalize position display (Title Case)
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                         $position = ucwords(strtolower(trim($position)));
                         if (!isset($positions[$position])) {
                             $positions[$position] = [];
@@ -187,7 +185,6 @@ if (!$elections) {
                     uksort($positions, function ($a, $b) {
                         return getPositionOrder($a) - getPositionOrder($b);
                     });
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                     foreach ($positions as $cands) {
                         foreach ($cands as $cand) {
                             if ($cand['votes'] > $max_votes) {
@@ -208,7 +205,6 @@ if (!$elections) {
 <<<<<<< HEAD
                             // Find winner for each position in this election
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                             $position_winners = [];
                             foreach ($positions as $position => $candidates) {
                                 $max_votes = 0;

@@ -18,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <<<<<<< HEAD
         // Final session regeneration after successful OTP verification
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
         session_regenerate_id(true);
         $_SESSION['voter_id'] = $_SESSION['temp_voter_id'];
         $_SESSION['voter_email'] = $_SESSION['temp_voter_email'];

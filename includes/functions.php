@@ -7,11 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_only_cookies', 1);
     ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
     ini_set('session.cookie_samesite', 'Strict');
-<<<<<<< HEAD
-    ini_set('session.gc_maxlifetime', 3600); // 1 hour
-=======
     ini_set('session.gc_maxlifetime', 3600);
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     session_start();
 
     if (!isset($_SESSION['initiated'])) {
@@ -92,7 +88,6 @@ function logSecureVote($voter_id, $election_id, $candidate_id, $position)
 <<<<<<< HEAD
 =======
     error_log("logSecureVote: Attempting to log vote - voter_id=$voter_id, election_id=$election_id, candidate_id=$candidate_id, position=$position, hash=$vote_hash");
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 
     $check_stmt = $db->prepare("SELECT 1 FROM vote_logs WHERE voter_id = ? AND election_id = ? AND position = ?");
     if ($check_stmt) {
@@ -103,7 +98,6 @@ function logSecureVote($voter_id, $election_id, $candidate_id, $position)
 <<<<<<< HEAD
 =======
             error_log("logSecureVote: Duplicate vote attempt detected - voter already voted for this position");
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
             $check_stmt->close();
             return false;
         }
@@ -115,7 +109,6 @@ function logSecureVote($voter_id, $election_id, $candidate_id, $position)
 <<<<<<< HEAD
 =======
         error_log("logSecureVote: MySQL prepare failed - " . $db->error);
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
         $check_column = $db->query("SHOW COLUMNS FROM vote_logs LIKE 'position'");
         if (!$check_column || $check_column->num_rows === 0) {
             $add_column = $db->query("ALTER TABLE vote_logs ADD COLUMN position VARCHAR(100) NOT NULL DEFAULT ''");
@@ -123,7 +116,6 @@ function logSecureVote($voter_id, $election_id, $candidate_id, $position)
 <<<<<<< HEAD
 =======
                 error_log("logSecureVote: position column added successfully");
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
                 $stmt = $db->prepare("INSERT INTO vote_logs (voter_id, election_id, candidate_id, position, vote_hash, voted_at) VALUES (?, ?, ?, ?, ?, ?)");
             }
         }
@@ -145,7 +137,6 @@ function logSecureVote($voter_id, $election_id, $candidate_id, $position)
         return false;
     } else {
         error_log("logSecureVote: Vote logged successfully with ID " . $db->insert_id);
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 
         $update_stmt = $db->prepare("UPDATE candidates SET votes = votes + 1 WHERE id = ?");
         if ($update_stmt) {
@@ -163,7 +154,6 @@ function logSecureVote($voter_id, $election_id, $candidate_id, $position)
             $update_stmt->close();
         } else {
             error_log("logSecureVote: Failed to prepare candidate update query - " . $db->error);
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
         }
     }
     $stmt->close();
@@ -285,7 +275,6 @@ function verifyOTP($voter_id, $otp)
     $debug_stmt->close();
 
 
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     $stmt = $conn->prepare("SELECT id, otp_code, expires_at FROM voter_otps WHERE voter_id = ?");
     if (!$stmt) {
         return false;
@@ -305,7 +294,6 @@ function verifyOTP($voter_id, $otp)
 <<<<<<< HEAD
 =======
             error_log("OTP Verification SUCCESS - Valid and not expired");
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
             break;
         }
     }
@@ -323,7 +311,6 @@ function verifyOTP($voter_id, $otp)
 <<<<<<< HEAD
 =======
         error_log("OTP Verification FAILED - no matching voter/OTP combination found or expired");
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
         return false;
     }
 }
@@ -367,7 +354,6 @@ function validatePhone($phone)
 <<<<<<< HEAD
     // Remove all non-digits and check length
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     $phone = preg_replace('/[^0-9]/', '', $phone);
     return strlen($phone) >= 10 && strlen($phone) <= 15;
 }

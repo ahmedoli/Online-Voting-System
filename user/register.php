@@ -10,7 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <<<<<<< HEAD
     // Verify CSRF token
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     if (!isset($_POST['csrf_token']) || !verifyCSRFToken($_POST['csrf_token'])) {
         $message = 'Invalid request. Please try again.';
         $message_type = 'error';
@@ -25,7 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <<<<<<< HEAD
         // Enhanced validation using new functions
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
         if (empty($name) || empty($phone) || empty($email) || empty($password) || empty($id_number) || empty($id_type)) {
             $message = 'All fields are required.';
             $message_type = 'error';

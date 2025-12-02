@@ -1,9 +1,5 @@
 <?php
-<<<<<<< HEAD
-if (session_status() == PHP_SESSION_NONE) {
-=======
 if (session_status() === PHP_SESSION_NONE) {
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     session_start();
 }
 require_once '../includes/db_connect.php';

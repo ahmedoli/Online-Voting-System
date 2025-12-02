@@ -7,7 +7,6 @@
  */
 
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 class ErrorHandler
 {
     private static $logFile = __DIR__ . '/../logs/app.log';
@@ -24,7 +23,6 @@ class ErrorHandler
         set_error_handler([self::class, 'handleError']);
         set_exception_handler([self::class, 'handleException']);
 
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
         $logDir = dirname(self::$logFile);
         if (!is_dir($logDir)) {
             @mkdir($logDir, 0755, true);
@@ -62,7 +60,6 @@ class ErrorHandler
         }
 
         return false;
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     }
 
     public static function handleException($exception)
@@ -83,7 +80,6 @@ class ErrorHandler
 <<<<<<< HEAD
         // Show generic error page in production
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
         if (self::isProduction()) {
             http_response_code(500);
             include __DIR__ . '/../error_pages/500.html';
@@ -130,5 +126,4 @@ class ErrorHandler
 <<<<<<< HEAD
 // Initialize error handling
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
 ErrorHandler::init();

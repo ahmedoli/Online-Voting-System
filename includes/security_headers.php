@@ -15,7 +15,6 @@ if (!defined('SECURITY_HEADERS_LOADED')) {
 if (!defined('SECURITY_HEADERS_LOADED')) {
     define('SECURITY_HEADERS_LOADED', true);
 
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     header('X-Frame-Options: DENY');
     header('X-XSS-Protection: 1; mode=block');
     header('X-Content-Type-Options: nosniff');
@@ -25,7 +24,6 @@ if (!defined('SECURITY_HEADERS_LOADED')) {
 <<<<<<< HEAD
     // CSP for basic protection (adjust based on your needs)
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     $csp = "default-src 'self'; " .
         "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
@@ -37,7 +35,6 @@ if (!defined('SECURITY_HEADERS_LOADED')) {
 <<<<<<< HEAD
     // Remove server information
 =======
->>>>>>> b5ab8834287dbd82661f740a10eaaee56c363f3b
     if (function_exists('header_remove')) {
         header_remove('X-Powered-By');
         header_remove('Server');
