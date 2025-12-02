@@ -82,24 +82,6 @@ try {
     }
 
     if ($success) {
-<<<<<<< HEAD
-        // Commit the transaction
-        $conn->commit();
-        header("Location: dashboard.php?success=1");
-    } else {
-        // Rollback on error
-        $conn->rollback();
-
-        header("Location: dashboard.php?error=vote_fail");
-    }
-} catch (Exception $e) {
-    // Rollback on any exception
-    $conn->rollback();
-
-    header("Location: dashboard.php?error=transaction_fail");
-} finally {
-    // Restore autocommit
-=======
         $conn->commit();
         header("Location: dashboard.php?success=1");
     } else {
