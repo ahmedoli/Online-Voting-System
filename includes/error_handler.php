@@ -1,25 +1,16 @@
 <?php
 
-<<<<<<< HEAD
 /**
  * Centralized Error Handler
  * Provides consistent error handling across the application
  */
 
-=======
 class ErrorHandler
 {
     private static $logFile = __DIR__ . '/../logs/app.log';
 
     public static function init()
     {
-<<<<<<< HEAD
-        // Set up custom error handler
-        set_error_handler([self::class, 'handleError']);
-        set_exception_handler([self::class, 'handleException']);
-
-        // Ensure log directory exists
-=======
         set_error_handler([self::class, 'handleError']);
         set_exception_handler([self::class, 'handleException']);
 
@@ -47,14 +38,6 @@ class ErrorHandler
 
         self::logError($error);
 
-<<<<<<< HEAD
-        // Don't show detailed errors in production
-        if (self::isProduction()) {
-            return true; // Suppress error output
-        }
-
-        return false; // Let PHP handle it normally in development
-=======
         if (self::isProduction()) {
             return true;
         }
@@ -77,9 +60,6 @@ class ErrorHandler
 
         self::logError($error);
 
-<<<<<<< HEAD
-        // Show generic error page in production
-=======
         if (self::isProduction()) {
             http_response_code(500);
             include __DIR__ . '/../error_pages/500.html';
@@ -123,7 +103,5 @@ class ErrorHandler
     }
 }
 
-<<<<<<< HEAD
 // Initialize error handling
-=======
 ErrorHandler::init();
